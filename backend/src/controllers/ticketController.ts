@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
-import { Ticket } from '../models/Ticket';
-import { User } from '../models/User';
+import mongoose from 'mongoose';
+import { Ticket, IMessage } from '../models/Ticket';
+import { User, IUser } from '../models/User';
 
 export const getTickets = async (req: Request, res: Response) => {
   try {
@@ -102,6 +103,92 @@ export const updateTicketStatus = async (req: Request, res: Response) => {
     res.json(ticket);
   } catch (error: any) {
     console.error('Update ticket status error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getTicketDetails = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(req.user?.userId).exec() as IUser;
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const ticket = await Ticket.findById(id)
+      .populate('createdBy', 'firstName lastName email')
+      .populate('assignedTo', 'firstName lastName email')
+      .populate('messages.sender', 'firstName lastName email');
+
+    if (!ticket) {
+      return res.status(404).json({ message: 'Ticket not found' });
+    }
+
+    // Check permissions
+    if (user.role === 'employee' && ticket.createdBy._id.toString() !== user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to view this ticket' });
+    }
+
+    if (user.role === 'agent' && ticket.department !== user.department) {
+      return res.status(403).json({ message: 'Not authorized to view this ticket' });
+    }
+
+    res.json(ticket);
+  } catch (error: any) {
+    console.error('Get ticket details error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const addReply = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { content, isAISuggested = false } = req.body;
+    const user = await User.findById(req.user?.userId).exec() as IUser;
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const ticket = await Ticket.findById(id);
+
+    if (!ticket) {
+      return res.status(404).json({ message: 'Ticket not found' });
+    }
+
+    // Check permissions
+    if (user.role === 'employee' && ticket.createdBy.toString() !== user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to reply to this ticket' });
+    }
+
+    if (user.role === 'agent' && ticket.department !== user.department) {
+      return res.status(403).json({ message: 'Not authorized to reply to this ticket' });
+    }
+
+    // Add message to ticket
+    const newMessage: IMessage = {
+      content,
+      sender: user._id,
+      isAISuggested,
+      createdAt: new Date(),
+    };
+
+    ticket.messages.push(newMessage);
+
+    // Update ticket status to in-progress if it was open
+    if (ticket.status === 'open') {
+      ticket.status = 'in-progress';
+    }
+
+    await ticket.save();
+
+    // Populate the new message's sender details
+    await ticket.populate('messages.sender', 'firstName lastName email');
+
+    res.json(ticket);
+  } catch (error: any) {
+    console.error('Add reply error:', error);
     res.status(500).json({ message: error.message });
   }
 }; 

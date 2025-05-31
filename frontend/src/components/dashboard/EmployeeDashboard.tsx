@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import  {useAuth}  from '../../contexts/AuthContext';
-
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 interface Ticket {
+  _id: string;
   id: string;
   title: string;
   description: string;
@@ -10,15 +12,36 @@ interface Ticket {
 }
 
 const EmployeeDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // TODO: Implement ticket fetching from API
   // TODO: Implement sorting and filtering logic
   // TODO: Implement chatbot integration
+
+  useEffect(() => {
+    if (user) {
+      fetchTickets();
+    }
+  }, [user]);
+
+  const fetchTickets = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/tickets`, {
+        credentials: 'include',
+      });
+      const data = await response.json();
+      Array.isArray(data) && setTickets(data);
+      console.log('Fetched tickets data:', data);
+    } catch (err) {
+      console.error('Error fetching tickets:', err);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -63,8 +86,12 @@ const EmployeeDashboard: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y">
-            {tickets.map((ticket) => (
-              <div key={ticket.id} className="p-6 hover:bg-gray-50">
+            {tickets?.map((ticket) => (
+              <div
+                key={ticket._id}
+                className="p-6 hover:bg-gray-50 cursor-pointer"
+                onClick={() => navigate(`/tickets/${ticket._id}`)}
+              >
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">{ticket.title}</h3>
