@@ -16,12 +16,13 @@ export const getFaqs = async (req: Request, res: Response) => {
     }
 
     const faqs = await FAQ.find({ department: user.department })
-      .populate('createdBy', 'firstName lastName email');
+      .populate('createdBy', 'firstName lastName email')
+      .lean();
 
     res.json(faqs);
   } catch (error: any) {
     console.error('Get FAQs error:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Failed to fetch FAQs' });
   }
 };
 
@@ -54,7 +55,7 @@ export const createFaq = async (req: Request, res: Response) => {
     res.status(201).json(faq);
   } catch (error: any) {
     console.error('Create FAQ error:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Failed to create FAQ' });
   }
 };
 
@@ -73,24 +74,26 @@ export const updateFaq = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Only agents can update FAQs' });
     }
 
-    const faq = await FAQ.findById(id);
+    const faq = await FAQ.findOneAndUpdate(
+      { _id: id, department: user.department },
+      { 
+        question, 
+        answer, 
+        updatedAt: new Date() 
+      },
+      { 
+        new: true, 
+        runValidators: true 
+      }
+    ).populate('createdBy', 'firstName lastName email');
 
     if (!faq) {
-      return res.status(404).json({ message: 'FAQ not found' });
+      return res.status(404).json({ message: 'FAQ not found or not in your department' });
     }
-
-    // Check if FAQ belongs to agent's department
-    if (faq.department !== user.department) {
-      return res.status(403).json({ message: 'Not authorized to update this FAQ' });
-    }
-
-    faq.question = question;
-    faq.answer = answer;
-    await faq.save();
 
     res.json(faq);
   } catch (error: any) {
     console.error('Update FAQ error:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: 'Failed to update FAQ' });
   }
 }; 

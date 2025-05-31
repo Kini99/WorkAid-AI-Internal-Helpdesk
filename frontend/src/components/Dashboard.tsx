@@ -22,7 +22,7 @@ const Dashboard: React.FC = () => {
       </div>
     );
   }
-
+console.log('dashboard', user.role, user.firstName)
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />

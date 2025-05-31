@@ -18,7 +18,7 @@ const Navbar: React.FC = () => {
       console.error('Logout failed:', error);
     }
   };
-
+console.log(user?.department, user?.role, user?.firstName)
   return (
     <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
