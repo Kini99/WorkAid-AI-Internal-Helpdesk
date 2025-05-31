@@ -1,30 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 interface User {
   id: string;
   email: string;
-  role: 'employee' | 'agent';
-  department: string;
   firstName: string;
   lastName: string;
+  role: 'employee' | 'agent';
+  department?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (userData: RegisterData) => Promise<void>;
+  register: (userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    role: 'employee' | 'agent';
+    department?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  role: 'employee' | 'agent';
-  department: string;
-  firstName: string;
-  lastName: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,7 +31,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -40,83 +38,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAuth = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/me', {
+      const response = await fetch(`${API_URL}/api/auth/me`, {
         credentials: 'include',
       });
-      
       if (response.ok) {
         const userData = await response.json();
+        console.log('checkAuth - User data received:', userData);
         setUser(userData);
       }
-    } catch (err) {
-      console.error('Auth check failed:', err);
+    } catch (error) {
+      console.error('Auth check failed:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (email: string, password: string) => {
-    try {
-      setError(null);
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email, password }),
-      });
+    const response = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email, password }),
+    });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Login failed');
-      }
-
-      const data = await response.json();
-      setUser(data.user);
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Login failed');
     }
+
+    const userData = await response.json();
+    console.log('login - User data received:', userData);
+    setUser(userData);
+    setLoading(false);
   };
 
-  const register = async (userData: RegisterData) => {
-    try {
-      setError(null);
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(userData),
-      });
+  const register = async (userData: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    role: 'employee' | 'agent';
+    department?: string;
+  }) => {
+    const response = await fetch(`${API_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(userData),
+    });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      const data = await response.json();
-      setUser(data.user);
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Registration failed');
     }
+
+    const newUser = await response.json();
+    setUser(newUser);
   };
 
   const logout = async () => {
-    try {
-      setError(null);
-      await fetch('http://localhost:5000/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      setUser(null);
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
-    }
+    await fetch(`${API_URL}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
