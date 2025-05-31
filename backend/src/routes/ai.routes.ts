@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { aiController } from '../controllers/ai.controller';
 import { auth } from '../middleware/auth';
+import express from 'express';
+import { suggestReply } from '../controllers/aiController';
 
 const router = Router();
 
@@ -13,5 +15,8 @@ router.post('/answer', aiController.generateAnswer);
 // Knowledge base management
 router.post('/knowledge-base', aiController.addToKnowledgeBase);
 router.post('/knowledge-base/search', aiController.searchKnowledgeBase);
+
+// Get AI-suggested reply for a ticket
+router.post('/tickets/:ticketId/suggest-reply', suggestReply);
 
 export default router; 

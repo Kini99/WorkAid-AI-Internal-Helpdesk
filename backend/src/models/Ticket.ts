@@ -1,5 +1,12 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+export interface IMessage {
+  content: string;
+  sender: mongoose.Types.ObjectId;
+  isAISuggested?: boolean;
+  createdAt: Date;
+}
+
 export interface ITicket extends Document {
   title: string;
   description: string;
@@ -7,9 +14,31 @@ export interface ITicket extends Document {
   department: string;
   createdBy: mongoose.Types.ObjectId;
   assignedTo?: mongoose.Types.ObjectId;
+  messages: IMessage[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const messageSchema = new Schema<IMessage>({
+  content: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  sender: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  isAISuggested: {
+    type: Boolean,
+    default: false,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
 const ticketSchema = new Schema<ITicket>(
   {
@@ -42,6 +71,7 @@ const ticketSchema = new Schema<ITicket>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    messages: [messageSchema],
   },
   {
     timestamps: true,
