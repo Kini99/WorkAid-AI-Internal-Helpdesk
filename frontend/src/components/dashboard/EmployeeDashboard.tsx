@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import  {useAuth}  from '../../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import CreateTicketModal from './CreateTicketModal';
+import { get } from '../../services/api';
 
 interface Ticket {
   id: string;
@@ -15,17 +17,39 @@ const EmployeeDashboard: React.FC = () => {
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isChatbotOpen, setIsChatbotOpen] = useState(false);
+  const [isCreateTicketModalOpen, setIsCreateTicketModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // TODO: Implement ticket fetching from API
-  // TODO: Implement sorting and filtering logic
-  // TODO: Implement chatbot integration
+  const fetchTickets = async () => {
+    try {
+      const data = await get<Ticket[]>('/api/tickets');
+      setTickets(data);
+    } catch (err) {
+      setError('Failed to load tickets. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const filteredAndSortedTickets = tickets
+    .filter(ticket => statusFilter === 'all' || ticket.status === statusFilter)
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+    });
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-800">My Tickets</h1>
         <button
-          onClick={() => {/* TODO: Implement new ticket creation */}}
+          onClick={() => setIsCreateTicketModalOpen(true)}
           className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
         >
           Create New Ticket
@@ -57,13 +81,17 @@ const EmployeeDashboard: React.FC = () => {
 
       {/* Tickets List */}
       <div className="bg-white rounded-lg shadow">
-        {tickets.length === 0 ? (
+        {isLoading ? (
+          <div className="p-8 text-center text-gray-500">Loading tickets...</div>
+        ) : error ? (
+          <div className="p-8 text-center text-red-500">{error}</div>
+        ) : filteredAndSortedTickets.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             No tickets found. Create your first ticket!
           </div>
         ) : (
           <div className="divide-y">
-            {tickets.map((ticket) => (
+            {filteredAndSortedTickets.map((ticket) => (
               <div key={ticket.id} className="p-6 hover:bg-gray-50">
                 <div className="flex justify-between items-start">
                   <div>
@@ -86,6 +114,13 @@ const EmployeeDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Create Ticket Modal */}
+      <CreateTicketModal
+        isOpen={isCreateTicketModalOpen}
+        onClose={() => setIsCreateTicketModalOpen(false)}
+        onSuccess={fetchTickets}
+      />
 
       {/* Chatbot Button */}
       <button
