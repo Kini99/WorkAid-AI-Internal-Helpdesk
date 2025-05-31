@@ -1,0 +1,26 @@
+{
+  "name": "workaid-ai-internal-helpdesk",
+  "version": "1.0.0",
+  "description": "An AI-powered internal helpdesk system for managing employee queries directed toward IT, HR, and Admin departments. The system includes ticket management, separate user dashboards, and AI-powered features such as auto-routing, response suggestions, self-serve Q&A, and pattern detection for improving operational efficiency.",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "husky install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
