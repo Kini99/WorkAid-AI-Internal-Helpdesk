@@ -6,7 +6,7 @@ const router = express.Router();
 
 // All routes require authentication
 router.use(auth);
-
+console.log('authentication success')
 // Get tickets (filtered by role)
 router.get('/', getTickets);
 

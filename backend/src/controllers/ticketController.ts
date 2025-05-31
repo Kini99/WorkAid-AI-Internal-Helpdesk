@@ -1,55 +1,71 @@
 import { Request, Response } from 'express';
-import { Ticket } from '../models/Ticket';
-import { User } from '../models/User';
+import { Ticket, ITicket } from '../models/Ticket';
+import { User, IUser } from '../models/User';
+import { routeTicketWithAI } from '../services/aiService';
+import { Types } from 'mongoose';
 
-export const getTickets = async (req: Request, res: Response) => {
+interface AuthRequest extends Request {
+  user?: {
+    userId: string;
+    role: string;
+  };
+}
+
+export const getTickets = async (req: AuthRequest, res: Response) => {
   try {
-    const { status, sortBy } = req.query;
-    const user = await User.findById(req.user?.userId);
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    let query: any = {};
-    let sort: any = { createdAt: -1 }; // Default sort by newest
-
-    // Filter by status if provided
-    if (status && status !== 'all') {
-      query.status = status;
-    }
-
-    // Set sort order
-    if (sortBy === 'oldest') {
-      sort = { createdAt: 1 };
-    }
-
-    // Filter tickets based on user role
-    if (user.role === 'employee') {
-      query.createdBy = user._id;
-    } else if (user.role === 'agent') {
-      query.department = user.department;
+    let query = {};
+    if (userRole === 'employee') {
+      // Employees can only see their own tickets
+      query = { createdBy: userId };
+    } else if (userRole === 'agent') {
+      // Agents can see tickets from their department. Fetch full user to get department.
+      const user = await User.findById(userId) as IUser;
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      query = { department: user.department };
     }
 
     const tickets = await Ticket.find(query)
-      .sort(sort)
-      .populate('createdBy', 'firstName lastName email')
-      .populate('assignedTo', 'firstName lastName email');
+      .sort({ createdAt: -1 })
+      .populate('createdBy', 'firstName lastName email');
 
     res.json(tickets);
-  } catch (error: any) {
-    console.error('Get tickets error:', error);
-    res.status(500).json({ message: error.message });
+  } catch (error) {
+    console.error('Error fetching tickets:', error);
+    res.status(500).json({ message: 'Failed to fetch tickets' });
   }
 };
 
-export const createTicket = async (req: Request, res: Response) => {
+export const createTicket = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, description, department } = req.body;
-    const user = await User.findById(req.user?.userId);
+    const { title, description } = req.body;
+    const userId = req.user?.userId;
 
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    // Get user's department for fallback and ticket creation
+    const user = await User.findById(userId) as IUser;
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Use AI to determine the appropriate department
+    let department;
+    try {
+      department = await routeTicketWithAI(title, description);
+    } catch (error) {
+      // Fallback to user's department if AI routing fails
+      department = user.department;
     }
 
     const ticket = new Ticket({
@@ -57,43 +73,44 @@ export const createTicket = async (req: Request, res: Response) => {
       description,
       department,
       createdBy: user._id,
+      status: 'open',
     });
 
     await ticket.save();
 
-    // Populate user details
-    await ticket.populate('createdBy', 'firstName lastName email');
-
     res.status(201).json(ticket);
-  } catch (error: any) {
-    console.error('Create ticket error:', error);
-    res.status(500).json({ message: error.message });
+  } catch (error) {
+    console.error('Error creating ticket:', error);
+    res.status(500).json({ message: 'Failed to create ticket' });
   }
 };
 
-export const updateTicketStatus = async (req: Request, res: Response) => {
+export const updateTicketStatus = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    const user = await User.findById(req.user?.userId);
+    const userId = req.user?.userId;
 
+    if (!userId) {
+       return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    const user = await User.findById(userId) as IUser;
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const ticket = await Ticket.findById(id);
+    const ticket = await Ticket.findById(id) as ITicket;
 
     if (!ticket) {
       return res.status(404).json({ message: 'Ticket not found' });
     }
 
     // Check permissions
-    if (user.role === 'employee' && ticket.createdBy.toString() !== user._id.toString()) {
+    if (user.role === 'employee' && ticket.createdBy.toString() !== (user._id as Types.ObjectId).toString()) {
       return res.status(403).json({ message: 'Not authorized to update this ticket' });
-    }
-
-    if (user.role === 'agent' && ticket.department !== user.department) {
-      return res.status(403).json({ message: 'Not authorized to update this ticket' });
+    } else if (user.role === 'agent' && ticket.department !== user.department) {
+       return res.status(403).json({ message: 'Not authorized to update this ticket' });
     }
 
     ticket.status = status;
