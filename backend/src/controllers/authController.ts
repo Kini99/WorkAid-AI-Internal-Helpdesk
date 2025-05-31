@@ -115,9 +115,21 @@ export const getMe = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json(user);
+    res.json({
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      department: user.department,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    });
   } catch (error: any) {
     console.error('getMe error:', error);
     res.status(500).json({ message: error.message });
   }
+};
+
+export const logout = (req: Request, res: Response) => {
+  res.clearCookie('token');
+  res.json({ message: 'Logged out successfully' });
 }; 
