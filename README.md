@@ -38,7 +38,8 @@ An AI-powered internal helpdesk system for managing employee queries directed to
 - **AI Integration**: 
   - LangChain
   - Gemini 2.0 Flash
-  - Chroma Vector Database
+  - Upstash Vector
+  - Upstash Redis
 
 ### Frontend
 - **Framework**: React
@@ -51,6 +52,7 @@ An AI-powered internal helpdesk system for managing employee queries directed to
 - Node.js (v14 or higher)
 - MongoDB
 - Google Cloud Account (for Gemini API)
+- Upstash Account (for Vector Database and Redis)
 
 ### Installation
 
@@ -72,24 +74,47 @@ npm install
 ```
 
 3. Set up environment variables:
-```bash
-# Backend (.env)
+
+Create a `.env` file in the `backend` directory and add the following variables:
+
+```env
 MONGODB_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
 GEMINI_API_KEY=your_gemini_api_key
+UPSTASH_VECTOR_URL=your_upstash_vector_url
+UPSTASH_VECTOR_TOKEN=your_upstash_vector_token
+UPSTASH_REDIS_URL=your_upstash_redis_url
+UPSTASH_REDIS_TOKEN=your_upstash_redis_token
+```
 
-# Frontend (.env)
+Create a `.env` file in the `frontend` directory and add the following variable:
+
+```env
 REACT_APP_API_URL=http://localhost:5000
 ```
 
-4. Start the development servers:
+4. Load initial data (Policies and FAQs):
+
+Load policy documents:
+```bash
+cd backend
+npm run load-policies
+```
+
+Load FAQs from MongoDB:
+```bash
+cd backend
+npm run load-faqs
+```
+
+5. Start the development servers:
 ```bash
 # Start backend server
 cd backend
 npm run dev
 
 # Start frontend server
-cd frontend
+cd ../frontend
 npm start
 ```
 
@@ -110,7 +135,7 @@ The system uses JWT-based authentication with the following features:
 
 ### Auto Routing
 - Uses LangChain with Gemini 2.0 Flash
-- Chroma vector database for similarity matching
+- Upstash Vector for similarity matching
 - Fallback to Admin department if routing is unclear
 
 ### Response Suggestions
@@ -120,11 +145,10 @@ The system uses JWT-based authentication with the following features:
 
 ### Self-Serve Bot
 - RAG-based question answering
-- Chroma-indexed knowledge base
+- Upstash Vector-indexed knowledge base
 - Graceful fallback handling
 
 ### Pattern Detection
 - Similarity threshold-based detection
 - FAQ suggestion system
 - Automatic knowledge base updates
-

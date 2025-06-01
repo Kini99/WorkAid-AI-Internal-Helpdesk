@@ -21,6 +21,7 @@ interface FAQ {
   question: string;
   answer: string;
   department: string;
+  isSuggested: boolean;
 }
 
 const EmployeeDashboard: React.FC = () => {
@@ -69,7 +70,7 @@ const EmployeeDashboard: React.FC = () => {
       fetchFAQs();
     } else if (!user && !loading) {
       // If user is null and not loading, it means auth failed or logged out, redirect.
-      navigate('/');
+      navigate("/");
     }
   }, [user, loading, navigate]);
 
@@ -184,7 +185,8 @@ const EmployeeDashboard: React.FC = () => {
                       </span>
                     </div>
                     <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                      Created: {new Date(ticket.createdAt).toLocaleDateString('en-GB')}
+                      Created:{" "}
+                      {new Date(ticket.createdAt).toLocaleDateString("en-GB")}
                     </div>
                   </div>
                 ))}
@@ -305,41 +307,55 @@ const EmployeeDashboard: React.FC = () => {
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
             <div className="px-6 py-4">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">FAQs</h2>
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
+                FAQs
+              </h2>
             </div>
             {faqs.length > 0 ? (
               <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {faqs.map((faq) => (
-                  <div key={faq.id} className="border-b border-gray-200 dark:border-gray-700">
-                    <button
-                      onClick={() => toggleFaq(faq.id)}
-                      className="w-full px-6 py-4 text-left focus:outline-none"
-                      aria-expanded={activeFaq === faq.id}
-                      aria-controls={`faq-${faq.id}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                          {faq.question}
-                        </h3>
-                        <svg
-                          className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform ${activeFaq === faq.id ? 'rotate-180' : ''}`}
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-                    </button>
+                {faqs
+                  .filter((faq) => !faq.isSuggested)
+                  .map((faq) => (
                     <div
-                      id={`faq-${faq.id}`}
-                      className={`px-6 pb-4 pt-0 transition-all duration-300 ease-in-out overflow-hidden ${activeFaq === faq.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
-                      aria-hidden={activeFaq !== faq.id}
+                      key={faq.id}
+                      className="border-b border-gray-200 dark:border-gray-700"
                     >
-                      <p className="text-gray-600 dark:text-gray-300">{faq.answer}</p>
+                      <button
+                        onClick={() => toggleFaq(faq.id)}
+                        className="w-full px-6 py-4 text-left focus:outline-none"
+                        aria-expanded={activeFaq === faq.id}
+                        aria-controls={`faq-${faq.id}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                            {faq.question}
+                          </h3>
+                          <svg
+                            className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform ${activeFaq === faq.id ? "rotate-180" : ""}`}
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      </button>
+                      <div
+                        id={`faq-${faq.id}`}
+                        className={`px-6 pb-4 pt-0 transition-all duration-300 ease-in-out overflow-hidden ${activeFaq === faq.id ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
+                        aria-hidden={activeFaq !== faq.id}
+                      >
+                        <p className="text-gray-600 dark:text-gray-300">
+                          {faq.answer}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             ) : (
               <div className="p-6 text-center text-gray-500 dark:text-gray-400">

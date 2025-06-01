@@ -1,35 +1,47 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ChromaClient } from 'chromadb';
+import { Index } from '@upstash/vector';
 import { AI_CONFIG } from '../config/ai.config';
 import { cacheService } from './cache.service';
 import { ITicket } from '../models/Ticket'; // Import ITicket
 import { IFAQ } from '../models/FAQ'; // Import IFAQ
 
-// Define a type for ChromaDB query results to help with type checking
-export interface ChromaQueryResult {
-  ids: string[][];
-  documents: string[][];
-  metadatas: (object | null)[][];
-  distances: number[][];
+// Define a type for Vector DB query results (matching Upstash format)
+export interface VectorQueryResult {
+  id: string;
+  score: number;
+  metadata?: object | null;
 }
 
 class AIService {
   private genAI: GoogleGenerativeAI;
-  private chromaClient: ChromaClient;
+  private vectorStore: Index;
   private policiesCollectionName = 'policies'; // Renamed for clarity
   private ticketsCollectionName = 'tickets'; // New collection name for tickets
   private faqsCollectionName = 'faqs'; // New collection name for FAQs
 
   constructor() {
     this.genAI = new GoogleGenerativeAI(AI_CONFIG.GEMINI_API_KEY);
-    this.chromaClient = new ChromaClient({
-      path: AI_CONFIG.CHROMA_DB_PATH
+    this.vectorStore = new Index({
+      url: AI_CONFIG.UPSTASH_VECTOR_URL!,
+      token: AI_CONFIG.UPSTASH_VECTOR_TOKEN!,
     });
     // Ensure collections are created on service initialization
     this.setupVectorStore(this.policiesCollectionName).catch(console.error);
     this.setupVectorStore(this.ticketsCollectionName).catch(console.error);
     this.setupVectorStore(this.faqsCollectionName).catch(console.error); // Setup faqs collection
     // TODO: Add logic to load existing FAQs into the 'faqs' collection on startup or via a script
+  }
+
+  async generateText(prompt: string): Promise<string> {
+    try {
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Error generating text with Gemini:', error);
+      throw new Error('Failed to generate text');
+    }
   }
 
   async generateResponse(prompt: string): Promise<string> {
@@ -44,23 +56,24 @@ class AIService {
       let context = '';
       let responseText = '';
 
-      // 1. Search ChromaDB (policies and faqs collections) for relevant information for RAG
+      // 1. Search Vector DB (policies and faqs collections) for relevant information for RAG
       const policiesSearchResults = await this.searchVectorStore(
-        this.policiesCollectionName, // Search policies for RAG context
+        this.policiesCollectionName,
         prompt,
-        5 // Limit results from policies
-        ) as ChromaQueryResult; // Add type assertion
+        5
+        ) as VectorQueryResult[]; // Expect an array of results
 
       const faqsSearchResults = await this.searchVectorStore(
-        this.faqsCollectionName, // Search FAQs for RAG context
+        this.faqsCollectionName,
         prompt,
-        5 // Limit results from FAQs
-        ) as ChromaQueryResult; // Add type assertion
+        5
+        ) as VectorQueryResult[]; // Expect an array of results
 
       // Combine documents from both search results
-      const policiesDocuments = policiesSearchResults?.documents?.[0] || [];
-      const faqsDocuments = faqsSearchResults?.documents?.[0] || [];
-      const combinedDocuments = [...policiesDocuments, ...faqsDocuments];
+      const combinedDocuments = [
+        ...(policiesSearchResults || []).map(result => (result.metadata as any)?.document || ''),
+        ...(faqsSearchResults || []).map(result => (result.metadata as any)?.document || ''),
+      ].filter(doc => doc);
 
       if (combinedDocuments.length > 0) {
         // 2. If relevant results found, build context and use RAG
@@ -94,14 +107,9 @@ class AIService {
 
   async setupVectorStore(collectionName: string) {
     try {
-      // Create or get collection
-      const collection = await this.chromaClient.getOrCreateCollection({
-        name: collectionName,
-        metadata: {
-          description: `${collectionName} collection` // Dynamic description
-        }
-      });
-      return collection;
+      // In Upstash Vector, collections are created automatically when you first use them
+      // No need for explicit creation
+      return this.vectorStore;
     } catch (error) {
       console.error(`Error setting up vector store collection '${collectionName}':`, error);
       throw new Error(`Failed to setup vector store collection '${collectionName}'`);
@@ -110,95 +118,82 @@ class AIService {
 
    async addTicketToVectorStore(ticket: ITicket) {
     try {
-      const collection = await this.setupVectorStore(this.ticketsCollectionName);
       const documentContent = `${ticket.title} ${ticket.description}`;
       const metadata = {
-        ticketId: ticket._id.toString(), // Store MongoDB _id as metadata
+        ticketId: ticket._id.toString(),
         department: ticket.department,
         createdAt: ticket.createdAt.toISOString(),
       };
 
-      // Embed and add the ticket content using its MongoDB _id as the Chroma ID
-      await collection.add({
-        ids: [ticket._id.toString()], // Use MongoDB _id as Chroma ID
-        documents: [documentContent],
-        metadatas: [metadata]
+      // Embed and add the ticket content
+      await this.vectorStore.upsert({
+        id: ticket._id.toString(),
+        vector: await this.getEmbedding(documentContent),
+        metadata: metadata
       });
 
     } catch (error) {
       console.error(`Error adding ticket ${ticket._id} to vector store:`, error);
-      // Do not rethrow, allow ticket creation to succeed even if embedding fails
     }
   }
 
   async addFaqToVectorStore(faq: IFAQ) {
     try {
-      const collection = await this.setupVectorStore(this.faqsCollectionName);
       const documentContent = `${faq.question} ${faq.answer}`;
       const metadata = {
-        faqId: faq._id.toString(), // Store MongoDB _id as metadata
+        faqId: faq._id.toString(),
         department: faq.department,
         createdAt: faq.createdAt.toISOString(),
       };
 
-      // Embed and add the FAQ content using its MongoDB _id as the Chroma ID
-      await collection.add({
-        ids: [faq._id.toString()], // Use MongoDB _id as Chroma ID
-        documents: [documentContent],
-        metadatas: [metadata]
+      // Embed and add the FAQ content
+      await this.vectorStore.upsert({
+        id: faq._id.toString(),
+        vector: await this.getEmbedding(documentContent),
+        metadata: metadata
       });
 
     } catch (error) {
       console.error(`Error adding FAQ ${faq._id} to vector store:`, error);
-      // Do not rethrow, allow operation to succeed even if embedding fails
-    }
-  }
-
-  async addToVectorStore(collectionName: string, documents: string[], metadatas: any[]) {
-    try {
-      const collection = await this.setupVectorStore(collectionName);
-      const ids = documents.map((_, i) => `doc_${i}`); // Original logic for policy docs
-      
-      await collection.add({
-        ids,
-        documents,
-        metadatas
-      });
-
-      // Clear search cache when new documents are added
-      await cacheService.delete(`search:${collectionName}`);
-    } catch (error) {
-      console.error(`Error adding documents to '${collectionName}' vector store:`, error);
-      throw new Error(`Failed to add documents to '${collectionName}' vector store`);
     }
   }
 
   async searchVectorStore(collectionName: string, query: string, limit: number = 5) {
     try {
-      // Check cache first - search cache uses a different key structure
+      // Check cache first
       const searchCacheKey = `search:${collectionName}:${query}:${limit}`;
       const cachedResults = await cacheService.get(searchCacheKey);
       if (cachedResults) {
-        // ChromaDB query results format is { ids, documents, metadatas, distances, embeddings, data }
-        // Need to ensure cachedResults has this structure, or just return the documents
-         // Assuming cachedResults stores the full results object
-        return cachedResults; // Return cached results directly
+        return cachedResults;
       }
 
-      const collection = await this.setupVectorStore(collectionName);
-      const results = await collection.query({
-        queryTexts: [query],
-        nResults: limit
+      const queryVector = await this.getEmbedding(query);
+      
+      const results = await this.vectorStore.query({
+        vector: queryVector,
+        topK: limit,
+        includeMetadata: true
       });
 
-      // Cache the results - assuming results is the object returned by chromaClient.query
+      // Cache the results
       await cacheService.set(searchCacheKey, results);
-      return results;
+      return results.map((result: any) => ({ // Map to the correct VectorQueryResult format
+        id: result.id,
+        score: result.score,
+        metadata: result.metadata,
+      })) as VectorQueryResult[]; // Assert return type as array of VectorQueryResult
     } catch (error) {
       console.error(`Error searching vector store collection '${collectionName}':`, error);
-      // Return empty results or rethrow based on desired error handling
-      return { ids: [], documents: [], metadatas: [], distances: [] }; // Return empty structure on error
+      return []; // Return an empty array on error
     }
+  }
+
+  private async getEmbedding(text: string): Promise<number[]> {
+    // Implement your embedding logic here using Gemini or another embedding model
+    // This is a placeholder - you'll need to implement the actual embedding logic
+    const model = this.genAI.getGenerativeModel({ model: "embedding-001" });
+    const result = await model.embedContent(text);
+    return result.embedding.values;
   }
 }
 

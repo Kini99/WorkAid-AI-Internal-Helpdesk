@@ -16,26 +16,31 @@ async function loadFAQs() {
     const faqs: IFAQ[] = await FAQ.find({}).lean();
 
     if (faqs.length === 0) {
+      console.log('No FAQs found in the database');
       return;
     }
 
-    // Add each FAQ to the 'faqs' collection in ChromaDB
+    console.log(`Loading ${faqs.length} FAQs into vector store...`);
+
+    // Add each FAQ to the vector store
     for (const faq of faqs) {
       await aiService.addFaqToVectorStore(faq);
+      console.log(`Loaded FAQ: ${faq.question}`);
     }
 
     // Clear the cache after loading new data
     await cacheService.clear();
+    console.log('Successfully loaded all FAQs into vector store');
 
   } catch (error) {
-    console.error('Error loading FAQs into ChromaDB:', error);
+    console.error('Error loading FAQs into vector store:', error);
     process.exit(1);
   } finally {
     // Disconnect from MongoDB
-    mongoose.disconnect();
+    await mongoose.disconnect();
     console.log('Disconnected from MongoDB');
   }
 }
 
 // Run the script
-loadFAQs(); 
+loadFAQs().catch(console.error); 

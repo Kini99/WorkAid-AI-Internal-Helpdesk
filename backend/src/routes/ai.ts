@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { aiController } from '../controllers/ai.controller';
 import { auth } from '../middleware/auth';
-import { suggestReply } from '../controllers/aiController';
+import { suggestReply } from '../controllers/aiBotController';
 
 const router = Router();
 

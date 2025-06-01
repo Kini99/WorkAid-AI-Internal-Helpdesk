@@ -1,0 +1,133 @@
+🖥️ IT POLICY
+1. Introduction
+This IT Policy outlines acceptable use of technology, security practices, and responsibilities. It applies to all employees, contractors, and vendors accessing company systems.
+
+2. Acceptable Use
+Company IT resources must be used for business purposes only.
+
+Personal use should be minimal and not impact work.
+
+Downloading pirated, illegal, or non-business-related content is prohibited.
+
+No unauthorized software/hardware installation.
+
+3. Security
+Use strong passwords and do not share them.
+
+Lock devices when away from desk.
+
+All computers must have updated antivirus and firewall protection.
+
+Report phishing, malware, or suspicious activity immediately to IT.
+
+4. Data Protection & Privacy
+Handle sensitive and personal data responsibly, in accordance with Indian data protection laws (e.g., PDPB, 2019 if applicable).
+
+Store data on authorized drives or cloud storage only.
+
+Avoid transferring sensitive data via personal emails or unencrypted channels.
+
+5. Email & Communication
+Use company email for all business communications.
+
+Do not open attachments or links from unknown senders.
+
+Avoid forwarding company documents to personal email addresses.
+
+6. Remote Access
+Remote access requires IT approval and must use a secure VPN.
+
+Devices used remotely must comply with company security standards.
+
+Avoid using public Wi-Fi for confidential tasks without protection.
+
+7. Policy Enforcement
+Violations may lead to disciplinary action, including termination.
+
+IT audits may be conducted regularly.
+
+Employees are expected to review this policy yearly.
+
+
+
+
+
+1. Introduction
+Covers responsible use of IT infrastructure, data protection, remote access, and cyber hygiene for all employees, interns, and vendors.
+
+2. Acceptable Use Policy
+✅ Permitted:
+Business-related emails, file transfers, browsing, remote access via VPN.
+
+Use of approved communication tools (Slack, Outlook, etc.).
+
+❌ Prohibited:
+Downloading torrents, pornography, pirated software.
+
+Storing personal photos, movies, or files on company drives.
+
+Using personal USBs on office systems (except with IT approval).
+
+Violation Action:
+
+First instance: Written warning + removal of unauthorized content.
+
+Repeated: Device seizure and access suspension.
+
+3. Software & Device Policy
+All software installations must be done by the IT team.
+
+Unauthorized apps like keyloggers, torrent clients, or crypto miners are banned.
+
+All devices must be encrypted and have remote-wipe capability.
+
+Lost/Stolen Devices:
+
+Must be reported to IT within 24 hours.
+
+FIR to be lodged for company-owned assets.
+
+Employee is liable for costs if negligence is proven.
+
+4. Password & Account Security
+Passwords must be at least 12 characters with alphanumeric symbols.
+
+Use of password managers (company-approved) is mandatory.
+
+IT must be informed before leaving for long leaves to suspend access temporarily.
+
+Password Sharing Consequence:
+
+Immediate account suspension + disciplinary notice.
+
+5. Email & Internet
+Avoid mass forwarding or chain emails.
+
+No use of personal email (Gmail/Yahoo) for company business.
+
+Limit non-work browsing to lunch/tea breaks.
+
+If phishing email is clicked:
+
+Employee must report within 30 minutes.
+
+IT will isolate the device and run threat analysis.
+
+Re-training will be mandatory.
+
+6. Remote Work
+Mandatory VPN and endpoint antivirus.
+
+Company reserves right to monitor remote sessions.
+
+No work from public Wi-Fi unless via secured hotspot/VPN.
+
+Failure to log VPN activity:
+
+Timesheet will be marked incomplete, impacting attendance score.
+
+7. Exit & Deactivation
+All access credentials must be revoked within 2 hours of notice submission.
+
+Company data on personal devices must be wiped in HR/IT presence.
+

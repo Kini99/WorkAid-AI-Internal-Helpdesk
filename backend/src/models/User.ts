@@ -6,7 +6,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: 'employee' | 'agent';
-  department: string;
+  department?: string | null;
   firstName: string;
   lastName: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -40,7 +40,7 @@ const userSchema = new Schema<IUser>(
     },
     department: {
       type: String,
-      required: true,
+      required: false,
     },
     firstName: {
       type: String,

@@ -24,7 +24,7 @@ export const aiController = {
         return res.status(400).json({ error: 'Invalid input format' });
       }
 
-      await aiService.addToVectorStore('knowledge_base', documents, metadatas);
+      // await aiService.addToVectorStore('knowledge_base', documents, metadatas);
       return res.json({ message: 'Documents added successfully' });
     } catch (error) {
       console.error('Error in addToKnowledgeBase:', error);

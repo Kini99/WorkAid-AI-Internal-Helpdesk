@@ -29,7 +29,16 @@ async function loadPolicies() {
     }
 
     console.log(`Loading ${documents.length} policy sections into vector store...`);
-    await aiService.addToVectorStore('policies', documents, metadatas);
+    
+    // Add each policy section to the vector store
+    for (let i = 0; i < documents.length; i++) {
+      const document = documents[i];
+      const metadata = metadatas[i];
+      
+      await aiService.addToVectorStore('policies', [document], [metadata]);
+      console.log(`Loaded policy section ${i + 1}/${documents.length}`);
+    }
+    
     console.log('Policy documents loaded successfully!');
   } catch (error) {
     console.error('Error loading policies:', error);
@@ -38,4 +47,4 @@ async function loadPolicies() {
 }
 
 // Run the script
-loadPolicies(); 
+loadPolicies().catch(console.error); 

@@ -179,7 +179,7 @@ const TicketDetails: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
+      <div className="mb-6 lg:mx-16">
         <button
           onClick={() => navigate("/dashboard")}
           className="text-blue-500 hover:text-blue-600 flex items-center"
@@ -201,11 +201,15 @@ const TicketDetails: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 text-gray-800 dark:text-gray-200">
+      <div className="lg:mx-16 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 text-gray-800 dark:text-gray-200">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{ticket.title}</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">{ticket.description}</p>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+              {ticket.title}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
+              {ticket.description}
+            </p>
           </div>
           <div className="flex items-center space-x-4">
             <span
@@ -235,20 +239,24 @@ const TicketDetails: React.FC = () => {
             Created by: {ticket.createdBy.firstName} {ticket.createdBy.lastName}
           </p>
           <p>Department: {ticket.department.toLocaleUpperCase()}</p>
-          <p>Created: {new Date(ticket.createdAt).toLocaleString('en-GB')}</p>
+          <p>Created: {new Date(ticket.createdAt).toLocaleString("en-GB")}</p>
         </div>
       </div>
 
       {/* Messages Thread */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 text-gray-800 dark:text-gray-200">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Conversation</h2>
+      <div className="lg:mx-16 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 text-gray-800 dark:text-gray-200">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+          Conversation
+        </h2>
         <div className="space-y-4">
           {ticket.messages.map((message, index) => (
             <div
               key={index}
-              className={`p-4 rounded-lg ${message.sender.email === user?.email ? 'bg-blue-100 dark:bg-blue-900 ml-auto' : 'bg-gray-100 dark:bg-gray-700 mr-auto'} max-w-[90%] text-gray-800 dark:text-gray-200`}
+              className={`p-4 rounded-lg ${message.sender.email === user?.email ? "bg-blue-100 dark:bg-blue-900 ml-auto" : "bg-gray-100 dark:bg-gray-700 mr-auto"} max-w-[90%] text-gray-800 dark:text-gray-200`}
             >
-              <p className={`text-sm font-medium ${message.sender.email === user?.email ? 'text-blue-900 dark:text-blue-200' : 'text-gray-900 dark:text-gray-100'}`}>
+              <p
+                className={`text-sm font-medium ${message.sender.email === user?.email ? "text-blue-900 dark:text-blue-200" : "text-gray-900 dark:text-gray-100"}`}
+              >
                 {message.sender.firstName} {message.sender.lastName}
               </p>
               <p className="mt-1">{message.content}</p>
@@ -259,8 +267,10 @@ const TicketDetails: React.FC = () => {
 
       {/* Reply Form */}
       {ticket.status !== "resolved" && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 text-gray-800 dark:text-gray-200">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add Reply</h2>
+        <div className="lg:mx-16 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 text-gray-800 dark:text-gray-200">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">
+            Add Reply
+          </h2>
           <form onSubmit={handleReply}>
             <textarea
               value={reply}

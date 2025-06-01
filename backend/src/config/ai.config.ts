@@ -9,7 +9,8 @@ if (!GEMINI_API_KEY) {
 
 export const AI_CONFIG = {
   GEMINI_API_KEY,
-  CHROMA_DB_PATH: process.env.CHROMA_DB_PATH || './chroma_db',
+  UPSTASH_VECTOR_URL: process.env.UPSTASH_VECTOR_URL,
+  UPSTASH_VECTOR_TOKEN: process.env.UPSTASH_VECTOR_TOKEN,
   VECTOR_DIMENSION: 768, // Default dimension for text embeddings
   MAX_TOKENS: 2048,
   TEMPERATURE: 0.7,
