@@ -14,12 +14,15 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Determine the department based on role
+    const userDepartment = role === 'agent' ? department : null; // Set department to null for employees
+
     // Create new user
     const user = new User({
       email,
       password,
       role,
-      department,
+      department: userDepartment, // Use the determined department
       firstName,
       lastName,
     });

@@ -254,11 +254,6 @@ const TicketDetails: React.FC = () => {
                 {message.sender.firstName} {message.sender.lastName}
               </p>
               <p className="mt-1">{message.content}</p>
-              {message.isAISuggested && (
-                <div className="mt-2 text-sm text-blue-600">
-                  AI Suggested Reply
-                </div>
-              )}
             </div>
           ))}
         </div>

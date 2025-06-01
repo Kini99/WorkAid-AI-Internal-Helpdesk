@@ -13,6 +13,7 @@ interface Ticket {
   description: string;
   status: "open" | "in-progress" | "resolved";
   createdAt: string;
+  department: string;
 }
 
 interface FAQ {
@@ -24,7 +25,7 @@ interface FAQ {
 
 const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
@@ -66,21 +67,24 @@ const EmployeeDashboard: React.FC = () => {
     if (user) {
       fetchTickets();
       fetchFAQs();
+    } else if (!user && !loading) {
+      // If user is null and not loading, it means auth failed or logged out, redirect.
+      navigate('/');
     }
-  }, [user]);
+  }, [user, loading, navigate]);
 
   const fetchTickets = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch(`${API_URL}/api/tickets`, {
         credentials: "include",
       });
       const data = await response.json();
-      setIsLoading(false);
       Array.isArray(data) && setTickets(data);
-      setIsLoading(false);
     } catch (err) {
       console.error("Error fetching tickets:", err);
       setError("Failed to load tickets. Please try again later.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -162,6 +166,9 @@ const EmployeeDashboard: React.FC = () => {
                         </h3>
                         <p className="text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
                           {ticket.description}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          Department: {ticket.department.toLocaleUpperCase()}
                         </p>
                       </div>
                       <span
@@ -295,74 +302,60 @@ const EmployeeDashboard: React.FC = () => {
             )}
           </div>
         </div>
-        <CreateTicketModal
-          isOpen={isCreateTicketModalOpen}
-          onClose={() => setIsCreateTicketModalOpen(false)}
-          onSuccess={fetchTickets}
-        />
-      </div>
-      <div className="mt-8 lg:mx-16">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
-          Frequently Asked Questions
-        </h2>
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-          {faqs.length > 0 ? (
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {faqs.map((faq) => (
-                <div
-                  key={faq.id}
-                  className="border-b border-gray-200 dark:border-gray-700"
-                >
-                  <button
-                    onClick={() => toggleFaq(faq.id)}
-                    className="w-full px-6 py-4 text-left focus:outline-none"
-                    aria-expanded={activeFaq === faq.id}
-                    aria-controls={`faq-${faq.id}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                        {faq.question}
-                      </h3>
-                      <svg
-                        className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform ${
-                          activeFaq === faq.id ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
+        <div className="lg:col-span-1">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+            <div className="px-6 py-4">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white">FAQs</h2>
+            </div>
+            {faqs.length > 0 ? (
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {faqs.map((faq) => (
+                  <div key={faq.id} className="border-b border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => toggleFaq(faq.id)}
+                      className="w-full px-6 py-4 text-left focus:outline-none"
+                      aria-expanded={activeFaq === faq.id}
+                      aria-controls={`faq-${faq.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                          {faq.question}
+                        </h3>
+                        <svg
+                          className={`w-5 h-5 text-gray-500 dark:text-gray-400 transform transition-transform ${activeFaq === faq.id ? 'rotate-180' : ''}`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </button>
+                    <div
+                      id={`faq-${faq.id}`}
+                      className={`px-6 pb-4 pt-0 transition-all duration-300 ease-in-out overflow-hidden ${activeFaq === faq.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+                      aria-hidden={activeFaq !== faq.id}
+                    >
+                      <p className="text-gray-600 dark:text-gray-300">{faq.answer}</p>
                     </div>
-                  </button>
-                  <div
-                    id={`faq-${faq.id}`}
-                    className={`px-6 pb-4 pt-0 transition-all duration-300 ease-in-out overflow-hidden ${
-                      activeFaq === faq.id
-                        ? "max-h-96 opacity-100"
-                        : "max-h-0 opacity-0"
-                    }`}
-                    aria-hidden={activeFaq !== faq.id}
-                  >
-                    <p className="text-gray-600 dark:text-gray-300">
-                      {faq.answer}
-                    </p>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-              No FAQs available at the moment.
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+                No FAQs available at the moment.
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      <CreateTicketModal
+        isOpen={isCreateTicketModalOpen}
+        onClose={() => setIsCreateTicketModalOpen(false)}
+        onSuccess={fetchTickets} // Refresh tickets after creating one
+      />
+
       <ChatbotWidget />
     </div>
   );

@@ -1,12 +1,30 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import EmployeeDashboard from './dashboard/EmployeeDashboard';
 import AgentDashboard from './dashboard/AgentDashboard';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading && !user) {
+      // If auth check is complete and no user is found, redirect to login
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
+
+  useEffect(() => {
+    console.log('Dashboard - user:', user, user?.role);
+    console.log('Dashboard - loading:', loading);
+    if (!loading && user && user.role) {
+      console.log('Dashboard - user role:', user.role);
+    }
+  }, [user, loading]);
+
+  if (loading || !user || (user.role !== 'employee' && user.role !== 'agent')) {
+    // Stay in loading state if still loading, no user, or user role is not yet a valid type
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -14,14 +32,6 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500">Please log in to access the dashboard</div>
-      </div>
-    );
-  }
-console.log('dashboard', user.role, user.firstName)
   return (
     <div className="min-h-screen">
       <main className="py-6">

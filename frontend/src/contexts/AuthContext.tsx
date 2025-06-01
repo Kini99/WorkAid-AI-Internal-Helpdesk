@@ -37,11 +37,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkAuth = async () => {
     try {
+      setLoading(true);
       const userData = await get<User>('/api/auth/me');
       console.log('checkAuth - User data received:', userData);
       setUser(userData);
     } catch (error) {
       console.error('Auth check failed:', error);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -49,13 +51,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     try {
-      const userData = await post<User>('/api/auth/login', { email, password });
+      setLoading(true);
+      const userData = await post<{message:string, user:User}>('/api/auth/login', { email, password });
       console.log('login - User data received:', userData);
-      setUser(userData);
-      setLoading(false);
+      setUser(userData.user);
     } catch (error) {
-      setLoading(false);
+      setUser(null);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,17 +71,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role: 'employee' | 'agent';
     department?: string;
   }) => {
-    const newUser = await post<User>('/api/auth/register', userData);
-    setUser(newUser);
+    try {
+      setLoading(true);
+      const newUser = await post<User>('/api/auth/register', userData);
+      setUser(newUser);
+    } catch (error) {
+      setUser(null);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = async () => {
     try {
+      setLoading(true);
       await post('/api/auth/logout', {});
+      setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
+      throw error;
     } finally {
-      setUser(null);
+      setLoading(false);
     }
   };
 

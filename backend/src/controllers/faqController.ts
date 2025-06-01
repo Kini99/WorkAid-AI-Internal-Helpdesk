@@ -63,7 +63,7 @@ export const createFaq = async (req: Request, res: Response) => {
 export const updateFaq = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { question, answer } = req.body;
+    const { question, answer, isSuggested } = req.body;
     const user = await User.findById(req.user?.userId);
 
     if (!user) {
@@ -80,6 +80,7 @@ export const updateFaq = async (req: Request, res: Response) => {
       { 
         question, 
         answer, 
+        isSuggested,
         updatedAt: new Date() 
       },
       { 
