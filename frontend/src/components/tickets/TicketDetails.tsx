@@ -203,11 +203,11 @@ const TicketDetails: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 text-gray-800 dark:text-gray-200">
         <div className="flex justify-between items-start mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">{ticket.title}</h1>
-            <p className="text-gray-600 mt-2">{ticket.description}</p>
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">{ticket.title}</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">{ticket.description}</p>
           </div>
           <div className="flex items-center space-x-4">
             <span
@@ -219,7 +219,7 @@ const TicketDetails: React.FC = () => {
                     : "bg-green-100 text-green-800"
               }`}
             >
-              {ticket.status}
+              {ticket.status.toLocaleUpperCase()}
             </span>
             {user?.role === "employee" && ticket.status !== "resolved" && (
               <button
@@ -232,37 +232,28 @@ const TicketDetails: React.FC = () => {
           </div>
         </div>
 
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-gray-500 dark:text-gray-400">
           <p>
             Created by: {ticket.createdBy.firstName} {ticket.createdBy.lastName}
           </p>
-          <p>Department: {ticket.department}</p>
-          <p>Created: {new Date(ticket.createdAt).toLocaleString()}</p>
+          <p>Department: {ticket.department.toLocaleUpperCase()}</p>
+          <p>Created: {new Date(ticket.createdAt).toLocaleString('en-GB')}</p>
         </div>
       </div>
 
       {/* Messages Thread */}
-      <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Conversation</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 text-gray-800 dark:text-gray-200">
+        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Conversation</h2>
         <div className="space-y-4">
           {ticket.messages.map((message, index) => (
             <div
               key={index}
-              className={`p-4 rounded-lg ${
-                message.isAISuggested
-                  ? "bg-blue-50 border border-blue-200"
-                  : "bg-gray-50"
-              }`}
+              className={`p-4 rounded-lg ${message.sender.email === user?.email ? 'bg-blue-100 dark:bg-blue-900 ml-auto' : 'bg-gray-100 dark:bg-gray-700 mr-auto'} max-w-[90%] text-gray-800 dark:text-gray-200`}
             >
-              <div className="flex justify-between items-start mb-2">
-                <div className="font-medium">
-                  {message.sender.firstName} {message.sender.lastName}
-                </div>
-                <div className="text-sm text-gray-500">
-                  {new Date(message.createdAt).toLocaleString()}
-                </div>
-              </div>
-              <p className="text-gray-700">{message.content}</p>
+              <p className={`text-sm font-medium ${message.sender.email === user?.email ? 'text-blue-900 dark:text-blue-200' : 'text-gray-900 dark:text-gray-100'}`}>
+                {message.sender.firstName} {message.sender.lastName}
+              </p>
+              <p className="mt-1">{message.content}</p>
               {message.isAISuggested && (
                 <div className="mt-2 text-sm text-blue-600">
                   AI Suggested Reply
@@ -275,12 +266,16 @@ const TicketDetails: React.FC = () => {
 
       {/* Reply Form */}
       {ticket.status !== "resolved" && (
-        <form
-          onSubmit={handleReply}
-          className="bg-white rounded-lg shadow-lg p-6"
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Add Reply</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6 text-gray-800 dark:text-gray-200">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Add Reply</h2>
+          <form onSubmit={handleReply}>
+            <textarea
+              value={reply}
+              onChange={handleReplyChange}
+              placeholder="Type your reply here..."
+              rows={4}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            ></textarea>
             {user?.role === "agent" && (
               <button
                 type="button"
@@ -303,32 +298,16 @@ const TicketDetails: React.FC = () => {
                 Get AI Suggestion
               </button>
             )}
-          </div>
-          <div className="relative">
-            <textarea
-              value={reply}
-              onChange={handleReplyChange}
-              placeholder="Type your reply here..."
-              className="w-full h-32 p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-blue-200 bg-blue-50"
-              required
-            />
-            {/* Commenting out the AI Suggested badge for now
-            {isAISuggested && (
-              <div className="absolute top-2 right-2 text-sm text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                AI Suggested
-              </div>
-            )}
-            */}
-          </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
-            >
-              Send Reply
-            </button>
-          </div>
-        </form>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-colors"
+              >
+                Send Reply
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );
