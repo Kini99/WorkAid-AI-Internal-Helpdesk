@@ -12,7 +12,7 @@ export interface VectorQueryResult {
   metadata?: object | null;
 }
 
-class AIService {
+export class AIService {
   private genAI: GoogleGenerativeAI;
   private vectorStore: Index;
   private policiesCollectionName = 'policies'; // Renamed for clarity
@@ -45,7 +45,7 @@ class AIService {
   }
 
   async generateResponse(prompt: string): Promise<string> {
-    let cacheKey = `response:${prompt}`; // Declare cacheKey outside try block
+    const cacheKey = `response:${prompt}`; // Changed to const since it's never reassigned
     try {
       // Check cache first
       const cachedResponse = await cacheService.get<string>(cacheKey);
@@ -188,12 +188,28 @@ class AIService {
     }
   }
 
-  private async getEmbedding(text: string): Promise<number[]> {
+  public async getEmbedding(text: string): Promise<number[]> {
     // Implement your embedding logic here using Gemini or another embedding model
     // This is a placeholder - you'll need to implement the actual embedding logic
     const model = this.genAI.getGenerativeModel({ model: "embedding-001" });
     const result = await model.embedContent(text);
     return result.embedding.values;
+  }
+
+  public async addToVectorStore(namespace: string, documents: string[], metadata: any[]): Promise<void> {
+    for (let i = 0; i < documents.length; i++) {
+      const document = documents[i];
+      const meta = metadata[i];
+      const vector = await this.getEmbedding(document);
+      await this.vectorStore.upsert({
+        id: crypto.randomUUID(),
+        vector,
+        metadata: {
+          ...meta,
+          namespace // Add namespace to metadata instead
+        }
+      });
+    }
   }
 }
 

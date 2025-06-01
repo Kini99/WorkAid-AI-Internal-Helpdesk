@@ -10,8 +10,7 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "jest",
-    "load-policies": "ts-node src/scripts/loadPolicies.ts",
-    "migrate-to-upstash": "ts-node src/scripts/migrateToUpstash.ts"
+    "load-policies": "ts-node src/scripts/loadPolicies.ts"
   },
   "keywords": [],
   "author": "",
