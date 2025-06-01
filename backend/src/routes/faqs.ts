@@ -7,16 +7,13 @@ const router = express.Router();
 // All routes require authentication
 router.use(auth);
 
-// All routes require agent role
-router.use(requireRole(['agent']));
-
-// Get FAQs for department
+// Get FAQs for department (Accessible by authenticated users - both employee and agent)
 router.get('/', getFaqs);
 
-// Create new FAQ
-router.post('/', createFaq);
+// Create new FAQ (Only accessible by agents)
+router.post('/', requireRole(['agent']), createFaq);
 
-// Update FAQ
-router.put('/:id', updateFaq);
+// Update FAQ (Only accessible by agents)
+router.put('/:id', requireRole(['agent']), updateFaq);
 
 export default router; 

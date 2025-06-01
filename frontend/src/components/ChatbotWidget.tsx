@@ -2,7 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import CreateTicketModal from './dashboard/CreateTicketModal';
+
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 interface ChatMessage {
   id: string;
   question: string;
@@ -16,7 +18,9 @@ const ChatbotWidget: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [isCreateTicketModalOpen, setIsCreateTicketModalOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -35,27 +39,23 @@ const ChatbotWidget: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  const fetchTickets = async () => {
-    try {
-      const response = await fetch(`${API_URL}/api/tickets`, {
-        credentials: "include",
-      });
-    response &&  setIsLoading(false);
-    } catch (err) {
-      console.error("Error fetching tickets:", err);
-      setIsLoading(false);
-    }
-  };
-
   const fetchChatHistory = async () => {
+    setIsHistoryLoading(true);
+    setError(null);
     try {
       const response = await fetch(`${API_URL}/api/ai/chatbot/history`, {
         credentials: 'include'
       });
+      if (!response.ok) {
+        throw new Error('Failed to fetch chat history');
+      }
       const data = await response.json();
       setMessages(data);
     } catch (error) {
       console.error('Error fetching chat history:', error);
+      setError('Failed to load chat history. Please try again.');
+    } finally {
+      setIsHistoryLoading(false);
     }
   };
 
@@ -64,6 +64,7 @@ const ChatbotWidget: React.FC = () => {
     if (!inputValue.trim() || isLoading) return;
 
     setIsLoading(true);
+    setError(null);
     try {
       const response = await fetch(`${API_URL}/api/ai/chatbot/answer-bot`, {
         method: 'POST',
@@ -73,6 +74,10 @@ const ChatbotWidget: React.FC = () => {
         credentials: 'include',
         body: JSON.stringify({ question: inputValue })
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to get response from AI');
+      }
 
       const data = await response.json();
       setMessages(prev => [...prev, {
@@ -84,18 +89,19 @@ const ChatbotWidget: React.FC = () => {
       setInputValue('');
     } catch (error) {
       console.error('Error sending message:', error);
+      setError('Failed to send message. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCreateTicket = () => {
-    navigate('/tickets/new');
+    setIsCreateTicketModalOpen(true);
   };
 
   const handleFeedback = async (messageId: string, wasHelpful: boolean) => {
     try {
-      await fetch(`${API_URL}/api/ai/chatbot/feedback/${messageId}`, {
+      const response = await fetch(`${API_URL}/api/ai/chatbot/feedback/${messageId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -103,8 +109,18 @@ const ChatbotWidget: React.FC = () => {
         credentials: 'include',
         body: JSON.stringify({ wasHelpful })
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to update feedback');
+      }
+
+      // Update the message in the local state
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, wasHelpful } : msg
+      ));
     } catch (error) {
       console.error('Error updating feedback:', error);
+      setError('Failed to update feedback. Please try again.');
     }
   };
 
@@ -154,32 +170,43 @@ const ChatbotWidget: React.FC = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((message) => (
-              <div key={message.id} className="space-y-2">
-                <div className="bg-gray-100 rounded-lg p-3">
-                  <p className="text-sm font-medium text-gray-900">You</p>
-                  <p className="text-gray-700">{message.question}</p>
-                </div>
-                <div className="bg-blue-100 rounded-lg p-3">
-                  <p className="text-sm font-medium text-blue-900">AI Assistant</p>
-                  <p className="text-gray-700">{message.response}</p>
-                  <div className="mt-2 flex space-x-2">
-                    <button
-                      onClick={() => handleFeedback(message.id, true)}
-                      className="text-xs text-green-600 hover:text-green-800"
-                    >
-                      Helpful
-                    </button>
-                    <button
-                      onClick={() => handleFeedback(message.id, false)}
-                      className="text-xs text-red-600 hover:text-red-800"
-                    >
-                      Not Helpful
-                    </button>
+            {isHistoryLoading ? (
+              <div className="flex justify-center items-center h-full">
+                <svg className="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+              </div>
+            ) : error ? (
+              <div className="text-red-600 text-center p-4">{error}</div>
+            ) : (
+              messages.map((message) => (
+                <div key={message.id} className="space-y-2">
+                  <div className="bg-gray-100 rounded-lg p-3">
+                    <p className="text-sm font-medium text-gray-900">You</p>
+                    <p className="text-gray-700">{message.question}</p>
+                  </div>
+                  <div className="bg-blue-100 rounded-lg p-3">
+                    <p className="text-sm font-medium text-blue-900">AI Assistant</p>
+                    <p className="text-gray-700">{message.response}</p>
+                    <div className="mt-2 flex space-x-2">
+                      <button
+                        onClick={() => handleFeedback(message.id, true)}
+                        className={`text-xs ${message.wasHelpful === true ? 'text-green-800 font-bold' : 'text-green-600 hover:text-green-800'}`}
+                      >
+                        Helpful
+                      </button>
+                      <button
+                        onClick={() => handleFeedback(message.id, false)}
+                        className={`text-xs ${message.wasHelpful === false ? 'text-red-800 font-bold' : 'text-red-600 hover:text-red-800'}`}
+                      >
+                        Not Helpful
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
             <div ref={messagesEndRef} />
           </div>
 
@@ -233,10 +260,13 @@ const ChatbotWidget: React.FC = () => {
           </form>
         </div>
       )}
-          <CreateTicketModal
+      <CreateTicketModal
         isOpen={isCreateTicketModalOpen}
         onClose={() => setIsCreateTicketModalOpen(false)}
-        onSuccess={fetchTickets}
+        onSuccess={() => {
+          setIsCreateTicketModalOpen(false);
+          navigate('/tickets');
+        }}
       />
     </div>
   );

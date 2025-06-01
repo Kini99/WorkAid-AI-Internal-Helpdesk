@@ -11,15 +11,12 @@ export const getFaqs = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Only agents can access FAQs
-    if (user.role !== 'agent') {
-      return res.status(403).json({ message: 'Only agents can access FAQs' });
-    }
+    const query = user.role === 'agent' ? { department: user.department } : {};
 
-    const faqs = await FAQ.find({ department: user.department })
+    const faqs = await FAQ.find(query)
       .populate('createdBy', 'firstName lastName email')
       .lean();
-
+console.log('Fetched FAQs:', faqs); 
     res.json(faqs);
   } catch (error: any) {
     console.error('Get FAQs error:', error);
