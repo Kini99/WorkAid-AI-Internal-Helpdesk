@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import { IMessage, ITicket, Ticket } from '../models/Ticket';
 import { IUser, User } from '../models/User';
-import { routeTicketWithAI } from '../services/aiService';
+import { routeTicketWithAI } from '../services/aiRoutingService';
+import { analyzeNewTicketForFAQ } from '../services/ticketAnalysisService';
 
 interface AuthRequest extends Request {
   user?: {
@@ -45,6 +46,7 @@ export const getTickets = async (req: AuthRequest, res: Response) => {
 };
 
 export const createTicket = async (req: AuthRequest, res: Response) => {
+  console.log('Inside createTicket function');
   try {
     const { title, description } = req.body;
     const userId = req.user?.userId;
@@ -77,10 +79,11 @@ export const createTicket = async (req: AuthRequest, res: Response) => {
     });
 
     await ticket.save();
+    analyzeNewTicketForFAQ(ticket);
 
     res.status(201).json(ticket);
   } catch (error) {
-    console.error('Error creating ticket:', error);
+    console.error('Error in createTicket function:', error);
     res.status(500).json({ message: 'Failed to create ticket' });
   }
 };

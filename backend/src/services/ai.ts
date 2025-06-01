@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export const generateAISuggestedReply = async (ticket: ITicket): Promise<string> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     // Create a prompt that includes the ticket context
     const prompt = `As an IT helpdesk agent, provide a professional and helpful response to the following ticket:

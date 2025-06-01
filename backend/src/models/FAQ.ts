@@ -1,12 +1,14 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IFAQ extends Document {
+  _id: mongoose.Types.ObjectId;
   question: string;
   answer: string;
   department: string;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  isSuggested?: boolean;
 }
 
 const faqSchema = new Schema<IFAQ>(
@@ -30,6 +32,10 @@ const faqSchema = new Schema<IFAQ>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+    },
+    isSuggested: {
+      type: Boolean,
+      default: false,
     },
   },
   {

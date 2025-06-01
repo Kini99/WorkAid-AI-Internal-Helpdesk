@@ -28,30 +28,11 @@ export const suggestReply = async (req: Request, res: Response) => {
       return res.status(403).json({ message: 'Not authorized to access this ticket' });
     }
 
-    // Check if there's already an AI-suggested reply that hasn't been used
-    const lastMessage = ticket.messages[ticket.messages.length - 1];
-    if (lastMessage?.isAISuggested && !lastMessage.content) {
-      return res.status(400).json({ message: 'AI suggestion already exists' });
-    }
-
     // Generate AI-suggested reply
     const suggestedReply = await generateAISuggestedReply(ticket);
 
-    // Add the suggested reply to the ticket
-    const newMessage = {
-      content: suggestedReply,
-      sender: user._id,
-      isAISuggested: true,
-      createdAt: new Date(),
-    };
-
-    ticket.messages.push(newMessage);
-    await ticket.save();
-
-    // Populate the new message's sender details
-    await ticket.populate('messages.sender', 'firstName lastName email');
-
-    res.json(ticket);
+    // Return just the suggestion without adding it to the ticket
+    res.json({ suggestedReply });
   } catch (error: any) {
     console.error('Suggest reply error:', error);
     res.status(500).json({ message: error.message });
