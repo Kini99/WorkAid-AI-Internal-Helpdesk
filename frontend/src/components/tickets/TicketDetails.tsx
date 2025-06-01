@@ -37,7 +37,6 @@ interface Ticket {
 
 const TicketDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  console.log("TicketDetails - id from useParams:", id);
   const navigate = useNavigate();
   const { user } = useAuth();
   const [ticket, setTicket] = useState<Ticket | null>(null);
@@ -47,7 +46,6 @@ const TicketDetails: React.FC = () => {
   const [isAISuggested, setIsAISuggested] = useState(false);
 
   useEffect(() => {
-    console.log("TicketDetails - useEffect triggered, id:", id);
     const fetchTicketDetails = async () => {
       try {
         const response = await fetch(`${API_URL}/api/tickets/${id}`, {

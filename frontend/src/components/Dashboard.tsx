@@ -15,14 +15,6 @@ const Dashboard: React.FC = () => {
     }
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    console.log('Dashboard - user:', user, user?.role);
-    console.log('Dashboard - loading:', loading);
-    if (!loading && user && user.role) {
-      console.log('Dashboard - user role:', user.role);
-    }
-  }, [user, loading]);
-
   if (loading || !user || (user.role !== 'employee' && user.role !== 'agent')) {
     // Stay in loading state if still loading, no user, or user role is not yet a valid type
     return (

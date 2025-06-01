@@ -38,7 +38,6 @@ class AIService {
       // Check cache first
       const cachedResponse = await cacheService.get<string>(cacheKey);
       if (cachedResponse) {
-        console.log('Returning cached response', cacheKey);
         return cachedResponse;
       }
 
@@ -57,10 +56,6 @@ class AIService {
         prompt,
         5 // Limit results from FAQs
         ) as ChromaQueryResult; // Add type assertion
-
-      // Log search results to inspect their structure
-      console.log('ChromaDB policies search results:', JSON.stringify(policiesSearchResults, null, 2));
-      console.log('ChromaDB FAQs search results:', JSON.stringify(faqsSearchResults, null, 2));
 
       // Combine documents from both search results
       const policiesDocuments = policiesSearchResults?.documents?.[0] || [];
@@ -85,7 +80,6 @@ class AIService {
 
       // Cache the response
       await cacheService.set(cacheKey, responseText);
-      console.log('Cached new response', cacheKey);
       return responseText;
 
     } catch (error) {
@@ -107,7 +101,6 @@ class AIService {
           description: `${collectionName} collection` // Dynamic description
         }
       });
-      console.log(`Vector store collection '${collectionName}' ready.`);
       return collection;
     } catch (error) {
       console.error(`Error setting up vector store collection '${collectionName}':`, error);
@@ -132,8 +125,6 @@ class AIService {
         metadatas: [metadata]
       });
 
-      console.log(`Ticket ${ticket._id} added to '${this.ticketsCollectionName}' vector store.`);
-
     } catch (error) {
       console.error(`Error adding ticket ${ticket._id} to vector store:`, error);
       // Do not rethrow, allow ticket creation to succeed even if embedding fails
@@ -157,8 +148,6 @@ class AIService {
         metadatas: [metadata]
       });
 
-      console.log(`FAQ ${faq._id} added to '${this.faqsCollectionName}' vector store.`);
-
     } catch (error) {
       console.error(`Error adding FAQ ${faq._id} to vector store:`, error);
       // Do not rethrow, allow operation to succeed even if embedding fails
@@ -178,7 +167,6 @@ class AIService {
 
       // Clear search cache when new documents are added
       await cacheService.delete(`search:${collectionName}`);
-      console.log(`${documents.length} documents added to '${collectionName}' vector store.`);
     } catch (error) {
       console.error(`Error adding documents to '${collectionName}' vector store:`, error);
       throw new Error(`Failed to add documents to '${collectionName}' vector store`);
@@ -191,7 +179,6 @@ class AIService {
       const searchCacheKey = `search:${collectionName}:${query}:${limit}`;
       const cachedResults = await cacheService.get(searchCacheKey);
       if (cachedResults) {
-        console.log('Returning cached search results', searchCacheKey);
         // ChromaDB query results format is { ids, documents, metadatas, distances, embeddings, data }
         // Need to ensure cachedResults has this structure, or just return the documents
          // Assuming cachedResults stores the full results object
@@ -206,7 +193,6 @@ class AIService {
 
       // Cache the results - assuming results is the object returned by chromaClient.query
       await cacheService.set(searchCacheKey, results);
-      console.log('Cached new search results', searchCacheKey);
       return results;
     } catch (error) {
       console.error(`Error searching vector store collection '${collectionName}':`, error);

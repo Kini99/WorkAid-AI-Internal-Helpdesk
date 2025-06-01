@@ -61,20 +61,14 @@ export const analyzeNewTicketForFAQ = async (newTicket: ITicket) => {
       }
 
       // 5. Generate FAQ suggestion using AI
-      const faqPrompt = `Based on the following tickets which seem to be about a recurring issue, suggest a concise FAQ question and answer that would help users resolve this problem.\n\nTickets:\n${similarTickets.map((t) => `- **${t.title}**: ${t.description}`).join('\n')}\n\nSuggested FAQ Question:\nSuggested FAQ Answer:`;
+      const faqPrompt = `Based on the following tickets which seem to be about a recurring issue, suggest a concise FAQ answer that would help users resolve this problem.\n\nTickets:\n${similarTickets.map((t) => `- **${t.title}**: ${t.description}`).join('\n')}. Reply with only the answer.`;
 
       // Use aiService.generateResponse which now incorporates RAG from policies (though the prompt is about tickets)
       // We might need a separate AI function specifically for synthesizing FAQ from tickets if the current one relies heavily on policy context
       const suggestedContent = await aiService.generateResponse(faqPrompt);
 
-      // Attempt to parse question and answer from the AI response
-      const questionMatch = suggestedContent.match(/Suggested FAQ Question:\n(.*)/);
-      const answerMatch = suggestedContent.match(/Suggested FAQ Answer:\n(.*)/);
-
-      const suggestedQuestion = questionMatch
-        ? questionMatch[1].trim()
-        : `FAQ suggestion for: ${newTicket.title}`; // Fallback question
-      const suggestedAnswer = answerMatch ? answerMatch[1].trim() : suggestedContent.trim(); // Fallback answer
+      const suggestedQuestion = newTicket.title; // Fallback question
+      const suggestedAnswer = suggestedContent.trim(); // Fallback answer
 
       // 6. Create and save the suggested FAQ
       // Need to determine the user who created the ticket to set createdBy for the suggested FAQ

@@ -17,7 +17,6 @@ declare global {
 export const auth = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.cookies.token;
-console.log('checking auth', req)
     if (!token) {
       return res.status(401).json({ message: 'Authentication required' });
     }

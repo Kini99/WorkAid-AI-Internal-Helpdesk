@@ -39,7 +39,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       const userData = await get<User>('/api/auth/me');
-      console.log('checkAuth - User data received:', userData);
       setUser(userData);
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -53,7 +52,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       const userData = await post<{message:string, user:User}>('/api/auth/login', { email, password });
-      console.log('login - User data received:', userData);
       setUser(userData.user);
     } catch (error) {
       setUser(null);

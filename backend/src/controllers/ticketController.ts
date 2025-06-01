@@ -46,7 +46,6 @@ export const getTickets = async (req: AuthRequest, res: Response) => {
 };
 
 export const createTicket = async (req: AuthRequest, res: Response) => {
-  console.log('Inside createTicket function');
   try {
     const { title, description } = req.body;
     const userId = req.user?.userId;

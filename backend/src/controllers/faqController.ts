@@ -16,7 +16,6 @@ export const getFaqs = async (req: Request, res: Response) => {
     const faqs = await FAQ.find(query)
       .populate('createdBy', 'firstName lastName email')
       .lean();
-console.log('Fetched FAQs:', faqs); 
     res.json(faqs);
   } catch (error: any) {
     console.error('Get FAQs error:', error);
