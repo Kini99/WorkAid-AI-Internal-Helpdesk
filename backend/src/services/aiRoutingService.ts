@@ -40,7 +40,7 @@ Respond with ONLY the department name in lowercase (it, hr, or admin).`;
 
 export const routeTicketWithAI = async (title: string, description: string): Promise<Department> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const prompt = `${SYSTEM_PROMPT}
 

@@ -3,9 +3,10 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth';
-import aiRoutes from './routes/ai.routes';
+import aiRoutes from './routes/ai';
 import ticketRoutes from './routes/tickets';
 import faqRoutes from './routes/faqs';
+import chatbotRoutes from './routes/chatbot';
 const PORT = process.env.PORT || 5000;
 const app = express();
 
@@ -25,7 +26,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/faqs', faqRoutes);
-
+app.use('/api/ai/chatbot', chatbotRoutes);
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack);

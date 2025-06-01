@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 interface Message {
   content: string;
@@ -18,7 +18,7 @@ interface Ticket {
   id: string;
   title: string;
   description: string;
-  status: 'open' | 'in-progress' | 'resolved';
+  status: "open" | "in-progress" | "resolved";
   department: string;
   createdBy: {
     firstName: string;
@@ -37,31 +37,31 @@ interface Ticket {
 
 const TicketDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  console.log('TicketDetails - id from useParams:', id);
+  console.log("TicketDetails - id from useParams:", id);
   const navigate = useNavigate();
   const { user } = useAuth();
   const [ticket, setTicket] = useState<Ticket | null>(null);
-  const [reply, setReply] = useState('');
+  const [reply, setReply] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAISuggested, setIsAISuggested] = useState(false);
 
   useEffect(() => {
-    console.log('TicketDetails - useEffect triggered, id:', id);
+    console.log("TicketDetails - useEffect triggered, id:", id);
     const fetchTicketDetails = async () => {
       try {
         const response = await fetch(`${API_URL}/api/tickets/${id}`, {
-          credentials: 'include',
+          credentials: "include",
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch ticket details');
+          throw new Error("Failed to fetch ticket details");
         }
 
         const data = await response.json();
         setTicket(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }
@@ -76,70 +76,75 @@ const TicketDetails: React.FC = () => {
 
     try {
       const response = await fetch(`${API_URL}/api/tickets/${id}/reply`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
-        body: JSON.stringify({ content: reply }),
+        credentials: "include",
+        body: JSON.stringify({
+          content: reply,
+          isAISuggested: isAISuggested,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send reply');
+        throw new Error("Failed to send reply");
       }
 
       const updatedTicket = await response.json();
       setTicket(updatedTicket);
-      setReply('');
+      setReply("");
+      setIsAISuggested(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send reply');
+      setError(err instanceof Error ? err.message : "Failed to send reply");
     }
   };
 
-  const handleStatusChange = async (newStatus: 'open' | 'in-progress' | 'resolved') => {
+  const handleStatusChange = async (
+    newStatus: "open" | "in-progress" | "resolved"
+  ) => {
     try {
       const response = await fetch(`${API_URL}/api/tickets/${id}/status`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({ status: newStatus }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update status');
+        throw new Error("Failed to update status");
       }
 
       const updatedTicket = await response.json();
       setTicket(updatedTicket);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update status');
+      setError(err instanceof Error ? err.message : "Failed to update status");
     }
   };
 
   const handleGetAISuggestion = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/ai/tickets/${id}/suggest-reply`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${API_URL}/api/ai/tickets/${id}/suggest-reply`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to get AI suggestion');
+        throw new Error("Failed to get AI suggestion");
       }
 
-      const updatedTicket = await response.json();
-      setTicket(updatedTicket);
-
-      // Set the reply to the AI-suggested content
-      const lastMessage = updatedTicket.messages[updatedTicket.messages.length - 1];
-      if (lastMessage.isAISuggested) {
-        setReply(lastMessage.content);
-        setIsAISuggested(true);
-      }
+      const data = await response.json();
+      setReply(data.suggestedReply);
+      setIsAISuggested(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get AI suggestion');
+      setError(
+        err instanceof Error ? err.message : "Failed to get AI suggestion"
+      );
     }
   };
 
@@ -178,7 +183,7 @@ const TicketDetails: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate("/dashboard")}
           className="text-blue-500 hover:text-blue-600 flex items-center"
         >
           <svg
@@ -205,16 +210,20 @@ const TicketDetails: React.FC = () => {
             <p className="text-gray-600 mt-2">{ticket.description}</p>
           </div>
           <div className="flex items-center space-x-4">
-            <span className={`px-3 py-1 rounded-full text-sm ${
-              ticket.status === 'open' ? 'bg-yellow-100 text-yellow-800' :
-              ticket.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-              'bg-green-100 text-green-800'
-            }`}>
+            <span
+              className={`px-3 py-1 rounded-full text-sm ${
+                ticket.status === "open"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : ticket.status === "in-progress"
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-green-100 text-green-800"
+              }`}
+            >
               {ticket.status}
             </span>
-            {user?.role === 'employee' && ticket.status !== 'resolved' && (
+            {user?.role === "employee" && ticket.status !== "resolved" && (
               <button
-                onClick={() => handleStatusChange('resolved')}
+                onClick={() => handleStatusChange("resolved")}
                 className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-colors"
               >
                 Mark Resolved
@@ -224,7 +233,9 @@ const TicketDetails: React.FC = () => {
         </div>
 
         <div className="text-sm text-gray-500">
-          <p>Created by: {ticket.createdBy.firstName} {ticket.createdBy.lastName}</p>
+          <p>
+            Created by: {ticket.createdBy.firstName} {ticket.createdBy.lastName}
+          </p>
           <p>Department: {ticket.department}</p>
           <p>Created: {new Date(ticket.createdAt).toLocaleString()}</p>
         </div>
@@ -239,8 +250,8 @@ const TicketDetails: React.FC = () => {
               key={index}
               className={`p-4 rounded-lg ${
                 message.isAISuggested
-                  ? 'bg-blue-50 border border-blue-200'
-                  : 'bg-gray-50'
+                  ? "bg-blue-50 border border-blue-200"
+                  : "bg-gray-50"
               }`}
             >
               <div className="flex justify-between items-start mb-2">
@@ -263,11 +274,14 @@ const TicketDetails: React.FC = () => {
       </div>
 
       {/* Reply Form */}
-      {ticket.status !== 'resolved' && (
-        <form onSubmit={handleReply} className="bg-white rounded-lg shadow-lg p-6">
+      {ticket.status !== "resolved" && (
+        <form
+          onSubmit={handleReply}
+          className="bg-white rounded-lg shadow-lg p-6"
+        >
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Add Reply</h2>
-            {user?.role === 'agent' && (
+            {user?.role === "agent" && (
               <button
                 type="button"
                 onClick={handleGetAISuggestion}
@@ -295,16 +309,16 @@ const TicketDetails: React.FC = () => {
               value={reply}
               onChange={handleReplyChange}
               placeholder="Type your reply here..."
-              className={`w-full h-32 p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                isAISuggested ? 'border-blue-200 bg-blue-50' : ''
-              }`}
+              className="w-full h-32 p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 border-blue-200 bg-blue-50"
               required
             />
+            {/* Commenting out the AI Suggested badge for now
             {isAISuggested && (
               <div className="absolute top-2 right-2 text-sm text-blue-600 bg-blue-100 px-2 py-1 rounded">
                 AI Suggested
               </div>
             )}
+            */}
           </div>
           <div className="mt-4 flex justify-end">
             <button
@@ -320,4 +334,4 @@ const TicketDetails: React.FC = () => {
   );
 };
 
-export default TicketDetails; 
+export default TicketDetails;

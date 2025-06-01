@@ -13,6 +13,7 @@ interface Ticket {
 }
 
 interface FAQ {
+  _id: string;
   id: string;
   question: string;
   answer: string;
@@ -24,6 +25,7 @@ interface FAQ {
   };
   createdAt?: string;
   updatedAt?: string;
+  isSuggested?: boolean;
 }
 
 const AgentDashboard: React.FC = () => {
@@ -31,6 +33,7 @@ const AgentDashboard: React.FC = () => {
   const { user } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [suggestedFaqs, setSuggestedFaqs] = useState<FAQ[]>([]);
   const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isEditingFaq, setIsEditingFaq] = useState<string | null>(null);
@@ -62,8 +65,11 @@ const AgentDashboard: React.FC = () => {
           throw new Error('Failed to fetch FAQs');
         }
 
-        const faqsData = await faqsResponse.json();
-        setFaqs(faqsData);
+        const faqsData: FAQ[] = await faqsResponse.json();
+        // Filter fetched FAQs into regular and suggested
+        setFaqs(faqsData.filter(faq => !faq.isSuggested));
+        setSuggestedFaqs(faqsData.filter(faq => faq.isSuggested));
+
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch data');
       } finally {
@@ -103,12 +109,43 @@ const AgentDashboard: React.FC = () => {
         throw new Error('Failed to update FAQ');
       }
 
-      const updatedFaq = await response.json();
-      setFaqs(faqs.map(faq => faq.id === faqId ? updatedFaq : faq));
+      const updatedFaq: FAQ = await response.json();
+      // Update either the regular or suggested FAQ list
+      if (updatedFaq.isSuggested) {
+         setSuggestedFaqs(suggestedFaqs.map(faq => faq.id === faqId ? updatedFaq : faq));
+      } else {
+         setFaqs(faqs.map(faq => faq.id === faqId ? updatedFaq : faq));
+      }
       setIsEditingFaq(null);
       setEditingFaqData({});
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update FAQ');
+    }
+  };
+
+  const handleAddToFaqList = async (faq: FAQ) => {
+    try {
+      // Call the update endpoint to set isSuggested to false
+      const response = await fetch(`${API_URL}/api/faqs/${faq._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ ...faq, isSuggested: false }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add FAQ to list');
+      }
+
+      const updatedFaq: FAQ = await response.json();
+      // Remove from suggested list and add to regular list
+      setSuggestedFaqs(suggestedFaqs.filter(suggested => suggested._id !== updatedFaq._id));
+      setFaqs([...faqs, updatedFaq]);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add FAQ to list');
     }
   };
 
@@ -180,8 +217,7 @@ const AgentDashboard: React.FC = () => {
               </div>
             ) : (
               <div className="divide-y">
-                {filteredAndSortedTickets.map((ticket) => {console.log('check', ticket)
-                  return   (
+                {filteredAndSortedTickets.map((ticket) => (
                   <div
                     key={ticket._id}
                     className="p-6 hover:bg-gray-50 cursor-pointer"
@@ -206,7 +242,7 @@ const AgentDashboard: React.FC = () => {
                       Created: {new Date(ticket.createdAt).toLocaleDateString()}
                     </div>
                   </div>
-                )})}
+                ))}
               </div>
             )}
           </div>
@@ -216,69 +252,22 @@ const AgentDashboard: React.FC = () => {
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Suggested FAQs</h2>
-            {faqs.length === 0 ? (
-              <p className="text-gray-500">No FAQs available.</p>
+            {suggestedFaqs.length === 0 ? (
+              <p className="text-gray-500">No suggested FAQs available.</p>
             ) : (
               <div className="space-y-4">
-                {faqs.map((faq) => (
-                  <div key={faq.id} className="border rounded-lg p-4">
-                    {isEditingFaq === faq.id ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={editingFaqData.question || ''}
-                          onChange={(e) => setEditingFaqData({ ...editingFaqData, question: e.target.value })}
-                          className="w-full border rounded-md px-3 py-2"
-                          placeholder="Question"
-                        />
-                        <textarea
-                          value={editingFaqData.answer || ''}
-                          onChange={(e) => setEditingFaqData({ ...editingFaqData, answer: e.target.value })}
-                          className="w-full border rounded-md px-3 py-2"
-                          placeholder="Answer"
-                          rows={3}
-                        />
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setIsEditingFaq(null);
-                              setEditingFaqData({});
-                            }}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={() => handleFaqUpdate(faq.id)}
-                            className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600"
-                          >
-                            Save
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <h3 className="font-medium">{faq.question}</h3>
-                        <p className="text-gray-600 mt-1">{faq.answer}</p>
-                        <button
-                          onClick={() => handleFaqEdit(faq)}
-                          className="text-blue-500 hover:text-blue-600 mt-2"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                          </svg>
-                        </button>
-                        {/* <button
-                          onClick={() => handleDeleteFaq(faq.id)}
-                          className="text-red-500 hover:text-red-600 p-1 hover:bg-red-50 rounded"
-                          title="Delete FAQ"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                        </button> */}
-                      </>
-                    )}
+                {suggestedFaqs.map((faq) => (
+                  <div key={faq._id} className="border rounded-lg p-4">
+                    <h3 className="text-md font-semibold text-gray-800">{faq.question}</h3>
+                    <p className="text-gray-600 mt-1 text-sm">{faq.answer}</p>
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        onClick={() => handleAddToFaqList(faq)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        Add to FAQ List
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

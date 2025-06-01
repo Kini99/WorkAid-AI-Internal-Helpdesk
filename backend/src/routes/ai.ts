@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import { aiController } from '../controllers/ai.controller';
 import { auth } from '../middleware/auth';
-import express from 'express';
 import { suggestReply } from '../controllers/aiController';
 
 const router = Router();

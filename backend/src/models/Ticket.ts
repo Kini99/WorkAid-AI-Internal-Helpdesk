@@ -8,6 +8,7 @@ export interface IMessage {
 }
 
 export interface ITicket extends Document {
+  _id: mongoose.Types.ObjectId;
   title: string;
   description: string;
   status: 'open' | 'in-progress' | 'resolved';

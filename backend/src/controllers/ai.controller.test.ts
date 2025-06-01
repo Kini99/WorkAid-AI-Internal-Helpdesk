@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import aiRoutes from '../routes/ai.routes';
+import aiRoutes from '../routes/ai';
 import { aiService } from '../services/ai.service';
 
 jest.mock('../middleware/auth', () => ({

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { FAQ } from '../models/FAQ';
 import { User } from '../models/User';
+import { aiService } from '../services/ai.service';
 
 export const getFaqs = async (req: Request, res: Response) => {
   try {
@@ -48,6 +49,9 @@ export const createFaq = async (req: Request, res: Response) => {
     });
 
     await faq.save();
+
+    // Add the newly created FAQ to ChromaDB
+    await aiService.addFaqToVectorStore(faq);
 
     // Populate user details
     await faq.populate('createdBy', 'firstName lastName email');
