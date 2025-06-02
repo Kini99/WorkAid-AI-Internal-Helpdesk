@@ -97,4 +97,25 @@ export const updateFaq = async (req: Request, res: Response) => {
     console.error('Update FAQ error:', error);
     res.status(500).json({ message: 'Failed to update FAQ' });
   }
+};
+
+export const acceptSuggestedFaq = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const faq = await FAQ.findByIdAndUpdate(
+      id,
+      { $set: { isSuggested: false } },
+      { new: true }
+    );
+
+    if (!faq) {
+      return res.status(404).json({ message: 'FAQ not found' });
+    }
+
+    res.json(faq);
+  } catch (error) {
+    console.error('Error accepting suggested FAQ:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 }; 

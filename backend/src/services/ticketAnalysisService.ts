@@ -55,7 +55,7 @@ export const analyzeNewTicketForFAQ = async (newTicket: ITicket) => {
       }
 
       // 5. Generate FAQ suggestion using AI
-      const faqPrompt = `Based on the following tickets which seem to be about a recurring issue, suggest a concise FAQ answer that would help users resolve this problem.\n\nTickets:\n${similarTickets.map((t) => `- **${t.title}**: ${t.description}`).join('\n')}. Reply with only the answer.`;
+      const faqPrompt = `Based on the following tickets which seem to be about a recurring issue, provide a concise FAQ answer that would help users resolve this problem. Provide ONLY the answer content without any prefixes like "Answer:", "A:", or "Q:". Do not include the question or any other formatting.\n\nTickets:\n${similarTickets.map((t) => `- **${t.title}**: ${t.description}`).join('\n')}`;
 
       // Use the new generateText function to bypass RAG for FAQ generation
       const suggestedContent = await aiService.generateText(faqPrompt);

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { get, put } from '../../services/api'; // Import get and put functions
+import { get, put, post } from '../../services/api'; // Import get, put, and post functions
 
 interface Ticket {
   _id: string;
@@ -124,8 +124,8 @@ const AgentDashboard: React.FC = () => {
 
   const handleAddToFaqList = async (faq: FAQ) => {
     try {
-      // Use the put function from api.ts
-      const updatedFaq = await put<FAQ>(`/api/faqs/${faq._id}`, { ...faq, isSuggested: false });
+      // Use the new post function for accepting a suggested FAQ
+      const updatedFaq = await post<FAQ>(`/api/faqs/${faq._id}/accept-suggestion`, {}); // Send POST to the new endpoint with empty body if no other data is needed
       // Remove from suggested list and add to regular list
       setSuggestedFaqs(
         suggestedFaqs.filter((suggested) => suggested._id !== updatedFaq._id)

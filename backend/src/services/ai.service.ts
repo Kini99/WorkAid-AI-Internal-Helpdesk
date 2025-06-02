@@ -33,15 +33,31 @@ export class AIService {
   }
 
   async generateText(prompt: string): Promise<string> {
-    try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
-    } catch (error) {
-      console.error('Error generating text with Gemini:', error);
-      throw new Error('Failed to generate text');
+    const MAX_RETRIES = 3;
+    const INITIAL_DELAY = 1000; // 1 second
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+      } catch (error: any) {
+        // Check if it's a service unavailability error
+        if (error.message?.includes('503') || error.message?.includes('overloaded')) {
+          if (attempt < MAX_RETRIES - 1) {
+            // Calculate delay with exponential backoff
+            const delay = INITIAL_DELAY * Math.pow(2, attempt);
+            console.log(`Attempt ${attempt + 1} failed. Retrying in ${delay}ms...`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+        }
+        console.error('Error generating text with Gemini:', error);
+        throw new Error('Failed to generate text');
+      }
     }
+    throw new Error('Failed to generate text after maximum retries');
   }
 
   async generateResponse(prompt: string): Promise<string> {
@@ -125,6 +141,7 @@ export class AIService {
         ticketId: ticket._id.toString(),
         department: ticket.department,
         createdAt: ticket.createdAt.toISOString(),
+        document: documentContent,
       };
 
       // Embed and add the ticket content
@@ -145,6 +162,7 @@ export class AIService {
         faqId: faq._id.toString(),
         department: faq.department,
         createdAt: faq.createdAt.toISOString(),
+        document: documentContent,
       };
 
       // Embed and add the FAQ content
