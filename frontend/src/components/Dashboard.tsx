@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import EmployeeDashboard from './dashboard/EmployeeDashboard';
-import AgentDashboard from './dashboard/AgentDashboard';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import AgentDashboard from './dashboard/AgentDashboard';
+import EmployeeDashboard from './dashboard/EmployeeDashboard';
 
 const Dashboard: React.FC = () => {
   const { user, loading } = useAuth();

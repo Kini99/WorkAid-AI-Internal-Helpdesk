@@ -51,8 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const userData = await post<{message:string, user:User}>('/api/auth/login', { email, password });
-      setUser(userData.user);
+      const responseData = await post<{ message: string; user: User }>('/api/auth/login', { email, password });
+      setUser(responseData.user);
     } catch (error) {
       setUser(null);
       throw error;
@@ -71,8 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }) => {
     try {
       setLoading(true);
-      const newUser = await post<User>('/api/auth/register', userData);
-      setUser(newUser);
+      const responseData = await post<{ message: string; user: User }>('/api/auth/register', userData);
+      setUser(responseData.user);
     } catch (error) {
       setUser(null);
       throw error;
@@ -88,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
+      setUser(null);
       throw error;
     } finally {
       setLoading(false);

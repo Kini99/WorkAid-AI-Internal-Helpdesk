@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CreateTicketModal from "./dashboard/CreateTicketModal";
-
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { get, post } from '../services/api';
 
 interface ChatMessage {
   id: string;
@@ -41,13 +40,7 @@ const ChatbotWidget: React.FC = () => {
     setIsHistoryLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/ai/chatbot/history`, {
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch chat history");
-      }
-      const data: ChatMessage[] = await response.json();
+      const data = await get<ChatMessage[]>('/api/ai/chatbot/history');
       const sortedMessages = data.sort(
         (a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
@@ -68,20 +61,8 @@ const ChatbotWidget: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/api/ai/chatbot/answer-bot`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ question: inputValue }),
-      });
+      const data = await post<{ response: string }>('/api/ai/chatbot/answer-bot', { question: inputValue });
 
-      if (!response.ok) {
-        throw new Error("Failed to get response from AI");
-      }
-
-      const data = await response.json();
       setMessages((prev) => [
         ...prev,
         {

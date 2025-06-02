@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import CreateTicketModal from "./CreateTicketModal";
-import ChatbotWidget from "../../components/ChatbotWidget";
+import { get } from '../../services/api';
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+// Lazy load ChatbotWidget to break circular dependency
+const ChatbotWidget = React.lazy(() => import("../../components/ChatbotWidget"));
 
 interface Ticket {
   _id: string;
@@ -77,10 +78,7 @@ const EmployeeDashboard: React.FC = () => {
   const fetchTickets = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_URL}/api/tickets`, {
-        credentials: "include",
-      });
-      const data = await response.json();
+      const data = await get<Ticket[]>('/api/tickets');
       Array.isArray(data) && setTickets(data);
     } catch (err) {
       console.error("Error fetching tickets:", err);
@@ -92,10 +90,7 @@ const EmployeeDashboard: React.FC = () => {
 
   const fetchFAQs = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/faqs`, {
-        credentials: "include",
-      });
-      const data = await response.json();
+      const data = await get<FAQ[]>('/api/faqs');
       setFaqs(data);
     } catch (err) {
       console.error("Error fetching FAQs:", err);
@@ -369,10 +364,12 @@ const EmployeeDashboard: React.FC = () => {
       <CreateTicketModal
         isOpen={isCreateTicketModalOpen}
         onClose={() => setIsCreateTicketModalOpen(false)}
-        onSuccess={fetchTickets} // Refresh tickets after creating one
+        onSuccess={fetchTickets}
       />
 
-      <ChatbotWidget />
+      <Suspense fallback={<div>Loading chat...</div>}>
+        <ChatbotWidget />
+      </Suspense>
     </div>
   );
 };

@@ -5,12 +5,19 @@ async function fetchApi(
   options: RequestInit = {}
 ): Promise<Response> {
   const url = `${API_URL}${endpoint}`;
+
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+  };
+
+  const headers = {
+    ...defaultHeaders,
+    ...options.headers,
+  } as HeadersInit;
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
     credentials: 'include',
   });
 

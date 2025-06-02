@@ -23,7 +23,8 @@ ${ticket.messages.map(msg => {
 }).join('\n')}
 
 Please provide a concise, professional, and helpful response that addresses the user's concerns. Reply only with a greeting, a summary of your understanding of the issue, and a resolution or next steps. End the message with a polite closing. Skip adding a subject line, mentioning username or any other non relevant information.
-In case the ticket is not related to IT, HR or Admin, please state that you are not able to help with this ticket and suggest reaching out to their manager if that is relevant or apologize for the inconvenience caused.`;
+In case the ticket is not related to IT, HR or Admin, please state that you are not able to help with this ticket and suggest reaching out to their manager if that is relevant or apologize for the inconvenience caused.
+In case you are given a greeting, politely respond with a greeting and then continue by asking what you can help the user with. If they ask what you can do, tell them you are a helpdesk agent and can assist with IT, HR and Admin related issues.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { get, post, put } from '../../services/api'; 
 
 interface Message {
   content: string;
@@ -48,15 +48,8 @@ const TicketDetails: React.FC = () => {
   useEffect(() => {
     const fetchTicketDetails = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/tickets/${id}`, {
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch ticket details");
-        }
-
-        const data = await response.json();
+        // Use the get function from api.ts
+        const data = await get<Ticket>(`/api/tickets/${id}`);
         setTicket(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -73,23 +66,12 @@ const TicketDetails: React.FC = () => {
     if (!reply.trim()) return;
 
     try {
-      const response = await fetch(`${API_URL}/api/tickets/${id}/reply`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          content: reply,
-          isAISuggested: isAISuggested,
-        }),
+      // Use the post function from api.ts
+      const updatedTicket = await post<Ticket>(`/api/tickets/${id}/reply`, {
+        content: reply,
+        isAISuggested: isAISuggested,
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to send reply");
-      }
-
-      const updatedTicket = await response.json();
       setTicket(updatedTicket);
       setReply("");
       setIsAISuggested(false);
@@ -102,20 +84,9 @@ const TicketDetails: React.FC = () => {
     newStatus: "open" | "in-progress" | "resolved"
   ) => {
     try {
-      const response = await fetch(`${API_URL}/api/tickets/${id}/status`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ status: newStatus }),
-      });
+      // Use the put function from api.ts
+      const updatedTicket = await put<Ticket>(`/api/tickets/${id}/status`, { status: newStatus });
 
-      if (!response.ok) {
-        throw new Error("Failed to update status");
-      }
-
-      const updatedTicket = await response.json();
       setTicket(updatedTicket);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update status");
@@ -124,19 +95,9 @@ const TicketDetails: React.FC = () => {
 
   const handleGetAISuggestion = async () => {
     try {
-      const response = await fetch(
-        `${API_URL}/api/ai/tickets/${id}/suggest-reply`,
-        {
-          method: "POST",
-          credentials: "include",
-        }
-      );
+      // Use the post function from api.ts
+      const data = await post<{ suggestedReply: string }>(`/api/ai/tickets/${id}/suggest-reply`, {});
 
-      if (!response.ok) {
-        throw new Error("Failed to get AI suggestion");
-      }
-
-      const data = await response.json();
       setReply(data.suggestedReply);
       setIsAISuggested(true);
     } catch (err) {

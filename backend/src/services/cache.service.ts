@@ -27,10 +27,18 @@ class CacheService {
   async get<T>(key: string): Promise<T | null> {
     try {
       const data = await this.redis.get(key);
-      return data ? JSON.parse(data as string) : null;
+      if (data === null) {
+        return null; // Cache miss
+      }
+      return JSON.parse(data as string) as T; // Attempt to parse
     } catch (error) {
-      console.error('Cache get error:', error);
-      return null;
+      console.error(`Cache get error for key ${key}:`, error);
+      // If parsing fails (e.g., SyntaxError), delete the corrupted key
+      if (error instanceof SyntaxError) {
+        console.warn(`Deleting corrupted cache key: ${key}`);
+        await this.delete(key); // Delete the invalid entry
+      }
+      return null; // Return null on any error
     }
   }
 

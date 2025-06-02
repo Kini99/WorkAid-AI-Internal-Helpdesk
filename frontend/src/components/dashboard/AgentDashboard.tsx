@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+import { get, put } from '../../services/api'; // Import get and put functions
+
 interface Ticket {
   _id: string;
   id: string;
@@ -53,28 +54,12 @@ const AgentDashboard: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Fetch tickets
-      const ticketsResponse = await fetch(`${API_URL}/api/tickets`, {
-        credentials: "include",
-      });
-
-      if (!ticketsResponse.ok) {
-        throw new Error("Failed to fetch tickets");
-      }
-
-      const ticketsData = await ticketsResponse.json();
+      // Fetch tickets using get from api.ts
+      const ticketsData = await get<Ticket[]>('/api/tickets');
       setTickets(ticketsData);
 
-      // Fetch FAQs
-      const faqsResponse = await fetch(`${API_URL}/api/faqs`, {
-        credentials: "include",
-      });
-
-      if (!faqsResponse.ok) {
-        throw new Error("Failed to fetch FAQs");
-      }
-
-      const faqsData: FAQ[] = await faqsResponse.json();
+      // Fetch FAQs using get from api.ts
+      const faqsData = await get<FAQ[]>('/api/faqs');
       // Filter fetched FAQs into regular and suggested
       setFaqs(faqsData.filter((faq) => !faq.isSuggested));
       setSuggestedFaqs(faqsData.filter((faq) => faq.isSuggested));
@@ -120,20 +105,8 @@ const AgentDashboard: React.FC = () => {
 
   const handleFaqUpdate = async (faqId: string) => {
     try {
-      const response = await fetch(`${API_URL}/api/faqs/${faqId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(editingFaqData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update FAQ");
-      }
-
-      const updatedFaq: FAQ = await response.json();
+      // Use the put function from api.ts
+      const updatedFaq = await put<FAQ>(`/api/faqs/${faqId}`, editingFaqData);
       // Update either the regular or suggested FAQ list
       if (updatedFaq.isSuggested) {
         setSuggestedFaqs(
@@ -151,21 +124,8 @@ const AgentDashboard: React.FC = () => {
 
   const handleAddToFaqList = async (faq: FAQ) => {
     try {
-      // Call the update endpoint to set isSuggested to false
-      const response = await fetch(`${API_URL}/api/faqs/${faq._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ ...faq, isSuggested: false }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to add FAQ to list");
-      }
-
-      const updatedFaq: FAQ = await response.json();
+      // Use the put function from api.ts
+      const updatedFaq = await put<FAQ>(`/api/faqs/${faq._id}`, { ...faq, isSuggested: false });
       // Remove from suggested list and add to regular list
       setSuggestedFaqs(
         suggestedFaqs.filter((suggested) => suggested._id !== updatedFaq._id)
