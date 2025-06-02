@@ -46,9 +46,6 @@ export const createFaq = async (req: Request, res: Response) => {
 
     await faq.save();
 
-    // Add the newly created FAQ to ChromaDB
-    await aiService.addFaqToVectorStore(faq);
-
     // Populate user details
     await faq.populate('createdBy', 'firstName lastName email');
 
@@ -91,7 +88,8 @@ export const updateFaq = async (req: Request, res: Response) => {
     if (!faq) {
       return res.status(404).json({ message: 'FAQ not found or not in your department' });
     }
-
+    // Add the newly created FAQ
+    await aiService.addFaqToVectorStore(faq);
     res.json(faq);
   } catch (error: any) {
     console.error('Update FAQ error:', error);
@@ -112,7 +110,8 @@ export const acceptSuggestedFaq = async (req: Request, res: Response) => {
     if (!faq) {
       return res.status(404).json({ message: 'FAQ not found' });
     }
-
+    // Add the newly created FAQ
+    await aiService.addFaqToVectorStore(faq);
     res.json(faq);
   } catch (error) {
     console.error('Error accepting suggested FAQ:', error);

@@ -142,6 +142,7 @@ export class AIService {
         department: ticket.department,
         createdAt: ticket.createdAt.toISOString(),
         document: documentContent,
+        namespace: 'tickets',
       };
 
       // Embed and add the ticket content
@@ -163,6 +164,7 @@ export class AIService {
         department: faq.department,
         createdAt: faq.createdAt.toISOString(),
         document: documentContent,
+        namespace: 'faqs',
       };
 
       // Embed and add the FAQ content
