@@ -1,5 +1,7 @@
 # WorkAid-AI-Internal-Helpdesk
 
+**Project is live on Vercel:** https://work-aid-ai-internal-helpdesk.vercel.app/
+
 An AI-powered internal helpdesk system for managing employee queries directed toward IT, HR, and Admin departments. The system includes ticket management, separate user dashboards, and AI-powered features such as auto-routing, response suggestions, self-serve Q&A, and pattern detection for improving operational efficiency.
 
 ## 🚀 Features
